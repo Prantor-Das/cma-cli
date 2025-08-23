@@ -1,37 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react"; // install with: npm i lucide-react
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState("light");
-
-  // Load theme from localStorage or system preference
-  useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored) {
-      setTheme(stored);
-      document.documentElement.classList.toggle("dark", stored === "dark");
-    } else {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      if (prefersDark) {
-        setTheme("dark");
-        document.documentElement.classList.add("dark");
-      }
-    }
-  }, []);
-
-  // Apply theme when changed
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
+export default function ThemeToggle({ darkMode, onToggle }) {
   return (
     <button
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="rounded-xl bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600 transition"
+      onClick={onToggle}
+      className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600 transition"
     >
-      Toggle {theme === "light" ? "Dark" : "Light"} Mode
+      {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+      {darkMode ? "Light" : "Dark"} Mode
     </button>
   );
 }
