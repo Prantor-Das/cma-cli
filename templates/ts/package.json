@@ -1,7 +1,7 @@
 {
   "scripts": {
     "client": "npm run dev --prefix client",
-    "server": "nodemon server/src/server.js",
+    "server": "nodemon server/src/server.ts",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "devDependencies": {

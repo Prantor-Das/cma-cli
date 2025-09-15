@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ApiMessage from "./components/ApiMessage";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
           <h1 className="text-3xl font-bold text-emerald-500 mb-4">
             MERN App Starter 🚀
           </h1>
+          <ApiMessage />
           <ThemeToggle
             darkMode={darkMode}
             onToggle={() => setDarkMode((d) => !d)}
