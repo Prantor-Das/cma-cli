@@ -1,22 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom"; // ✅ should be react-router-dom
+import { createBrowserRouter, RouterProvider } from "react-router";
 import App from "./App";
-import { ThemeProvider } from "./ThemeContext";
+import About from "./pages/About";
+import Layout from "./Layout";
 import "./global.css";
 
 const router = createBrowserRouter([
-  { path: "/", element: <App /> },
+  {
+    element: <Layout />,
+    children: [
+      { path: "/", element: <App /> },
+      { path: "/about", element: <About /> },
+    ],
+  },
 ]);
 
-const rootElement = document.getElementById("root");
-
-if (rootElement) {
-  ReactDOM.createRoot(rootElement as HTMLElement).render(
-    <React.StrictMode>
-      <ThemeProvider>
-        <RouterProvider router={router} />
-      </ThemeProvider>
-    </React.StrictMode>
-  );
-}
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);

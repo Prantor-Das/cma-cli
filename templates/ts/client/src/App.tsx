@@ -1,24 +1,22 @@
-import { useState } from "react";
-import ApiMessage from "./components/ApiMessage";
 import ThemeToggle from "./components/ThemeToggle";
+import ApiMessage from "./components/ApiMessage";
+import { useTheme } from "./ThemeContext";
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const { darkMode, toggleTheme } = useTheme();
 
   return (
-    <div className={darkMode ? "dark" : "light"}>
-      <div className="flex h-screen items-center justify-center transition-colors">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-emerald-500 mb-4">
-            MERN App Starter 🚀
-          </h1>
-          <ApiMessage />
-          <ThemeToggle
-            darkMode={darkMode}
-            onToggle={() => setDarkMode((d) => !d)}
-          />
-        </div>
-      </div>
+    <div>
+      <h1 className="text-3xl font-bold text-emerald-500 mb-4">
+        MERN App Starter 🚀
+      </h1>
+
+      <ApiMessage />
+
+      <ThemeToggle
+        darkMode={darkMode}
+        onToggle={toggleTheme}
+      />
     </div>
   );
 }

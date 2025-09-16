@@ -14,14 +14,21 @@ const serverOptionalPackages = {
   "bcrypt": "^5.1.0",
 };
 
-async function processPackageJson(projectPath, extraPackages, language) {
+async function processPackageJson(projectPath, extraPackages, language, projectName) {
   console.log("✨ Processing package.json files...");
 
+  const rootPackageJsonPath = path.join(projectPath, "package.json");
   const clientPackageJsonPath = path.join(projectPath, "client", "package.json");
   const serverPackageJsonPath = path.join(projectPath, "server", "package.json");
 
   const updatePackageJson = async (packageJsonPath, type) => {
     const packageJson = await fs.readJson(packageJsonPath);
+
+    if (type === "root") {
+      packageJson.name = projectName;
+    } else {
+      packageJson.name = `${projectName}-${type}`;
+    }
 
     const relevantOptionalPackages = type === "client" ? clientOptionalPackages : serverOptionalPackages;
 
@@ -47,10 +54,80 @@ async function processPackageJson(projectPath, extraPackages, language) {
     await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
   };
 
+  await updatePackageJson(rootPackageJsonPath, "root");
   await updatePackageJson(clientPackageJsonPath, "client");
   await updatePackageJson(serverPackageJsonPath, "server");
 
   console.log("✅ package.json files processed.");
+}
+
+async function processTemplateFiles(projectPath, extraPackages, language) {
+  console.log("✨ Processing template files...");
+
+  const serverFilePath = path.join(projectPath, "server", "src", `server.${language === "JavaScript" ? "js" : "ts"}`);
+  let serverFileContent = await fs.readFile(serverFilePath, "utf-8");
+
+  if (!extraPackages.includes("dotenv")) {
+    serverFileContent = serverFileContent.replace(/import dotenv from "dotenv";\n/, "");
+    serverFileContent = serverFileContent.replace(/dotenv.config\(\);\n/, "");
+  }
+
+  if (!extraPackages.includes("cors")) {
+    serverFileContent = serverFileContent.replace(/import cors from "cors";\n/, "");
+    serverFileContent = serverFileContent.replace(/app.use\(cors\(\)\);\n/, "");
+  }
+
+  await fs.writeFile(serverFilePath, serverFileContent);
+
+  const apiMessageFilePath = path.join(projectPath, "client", "src", "components", `ApiMessage.${language === "JavaScript" ? "jsx" : "tsx"}`);
+  let apiMessageFileContent = await fs.readFile(apiMessageFilePath, "utf-8");
+
+  if (extraPackages.includes("axios")) {
+    if (language === "JavaScript") {
+      apiMessageFileContent = `import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+export default function ApiMessage() {
+  const [message, setMessage] = useState("Loading...");
+
+  useEffect(() => {
+    axios.get("http://localhost:5000/api")
+      .then((res) => setMessage(res.data.message))
+      .catch((err) => {
+        console.error(err);
+        setMessage("Failed to fetch API");
+      });
+  }, []);
+
+  return <p className="text-lg mb-6">{message}</p>;
+}
+`;
+    } else {
+      apiMessageFileContent = `import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+export default function ApiMessage() {
+  const [message, setMessage] = useState<string>("Loading...");
+
+  useEffect(() => {
+    axios.get("http://localhost:5000/api")
+      .then((res) => setMessage(res.data.message))
+      .catch((err) => {
+        console.error(err);
+        setMessage("Failed to fetch API");
+      });
+  }, []);
+
+  return <p className="text-lg mb-6">{message}</p>;
+}
+`;
+    }
+  }
+
+  await fs.writeFile(apiMessageFilePath, apiMessageFileContent);
+
+
+  console.log("✅ Template files processed.");
 }
 
 async function createProjectFolder(projectPath) {
@@ -65,10 +142,11 @@ async function copyTemplateFiles(templateDir, projectPath) {
   console.log(`✅ Template files copied.`);
 }
 
-async function installDependencies(projectPath, install) {
+async function installDependencies(projectPath, install, language) {
   if (install) {
-    console.log(`✨ Installing dependencies in ${projectPath}`);
-    await execa("npm", ["install"], { cwd: projectPath });
+    console.log(`✨ Installing dependencies for all workspaces in ${projectPath}`);
+    const args = ["install"];
+    await execa("npm", args, { cwd: projectPath });
     console.log(`✅ Dependencies installed.`);
   } else {
     console.log(`❌ Skipping dependency installation.`);
@@ -95,7 +173,8 @@ export async function createProject(config) {
   try {
     await createProjectFolder(projectPath);
     await copyTemplateFiles(templateDir, projectPath);
-    await processPackageJson(projectPath, config.extraPackages, config.language);
+    await processPackageJson(projectPath, config.extraPackages, config.language, config.projectName);
+    await processTemplateFiles(projectPath, config.extraPackages, config.language);
 
     console.log(`✨ Setting up frontend with ${config.language === "TypeScript" ? "Vite + React + TS" : "Vite + React + JS"}`);
     console.log(`✅ Frontend setup complete.`);
@@ -118,7 +197,7 @@ export async function createProject(config) {
       console.log("❌ Skipping concurrently setup.");
     }
 
-    await installDependencies(projectPath, config.installDependencies);
+    await installDependencies(projectPath, config.installDependencies, config.language);
     await initializeGit(projectPath, config.gitRepo);
 
     console.log(`

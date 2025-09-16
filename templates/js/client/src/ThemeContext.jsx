@@ -22,7 +22,7 @@ export function ThemeProvider({ children }) {
 
   return (
     <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
-      <div className={darkMode ? "dark" : ""}>{children}</div>
+      {children}
     </ThemeContext.Provider>
   );
 }

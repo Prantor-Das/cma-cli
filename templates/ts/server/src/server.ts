@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import connectDB from "./config/connectDB";
+import routes from "./routes/index";
 
 dotenv.config();
 
@@ -12,19 +13,21 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Hello from backend 👋");
-});
+app.use("/api", routes);
 
-connectDB()
-  .then(() => {
-    console.log("Database connected");
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.log("Error connecting to database", err);
-  });
+async function startServer() {
+  if (process.env.MONGODB_URI) {
+    try {
+      await connectDB();
+      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    } catch (error) {
+      console.error("Failed to connect to the database. Server not started.");
+    }
+  } else {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  }
+}
 
-  export default app;
+startServer();
+
+export default app;
