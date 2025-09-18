@@ -1,6 +1,6 @@
 import ThemeToggle from "./components/ThemeToggle";
 import ApiMessage from "./components/ApiMessage";
-import { useTheme } from "./ThemeContext";
+import { useTheme } from "./context/ThemeContext";
 
 export default function App() {
   const { darkMode, toggleTheme } = useTheme();

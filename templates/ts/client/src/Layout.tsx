@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { ThemeProvider, useTheme } from "./ThemeContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { ReactNode } from "react";
 
 function LayoutContent() {

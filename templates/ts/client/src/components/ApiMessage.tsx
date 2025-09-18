@@ -5,7 +5,7 @@ export default function ApiMessage() {
   const [message, setMessage] = useState<string>("Loading...");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api")
+    fetch("http://localhost:8000/api")
       .then((res) => res.json())
       .then((data: { message: string }) => setMessage(data.message))
       .catch((err) => {
