@@ -1,18 +1,85 @@
-// client/src/components/ApiMessage.jsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { Card, CardContent } from "./ui/Card";
+import { API_ENDPOINTS } from "../config/constants";
 
 export default function ApiMessage() {
-  const [message, setMessage] = useState("Loading...");
+  const [state, setState] = useState({
+    message: "",
+    loading: true,
+    error: null
+  });
 
   useEffect(() => {
-    fetch("http://localhost:5000/api")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => {
-        console.error(err);
-        setMessage("Failed to fetch API");
-      });
+    const fetchData = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.API_ROOT);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setState({
+          message: data.message,
+          loading: false,
+          error: null
+        });
+      } catch (error) {
+        console.error("API fetch error:", error);
+        setState({
+          message: "",
+          loading: false,
+          error: error.message || "Failed to fetch from API"
+        });
+      }
+    };
+
+    fetchData();
   }, []);
 
-  return <p className="text-lg mb-6">{message}</p>;
+  return (
+    <Card className="w-full max-w-md animate-fade-in">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3">
+          {state.loading && (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              <span className="text-gray-600 dark:text-gray-400">
+                Connecting to API...
+              </span>
+            </>
+          )}
+          
+          {state.error && (
+            <>
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <p className="text-red-600 dark:text-red-400 font-medium">
+                  Connection Failed
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {state.error}
+                </p>
+              </div>
+            </>
+          )}
+          
+          {!state.loading && !state.error && (
+            <>
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-green-600 dark:text-green-400 font-medium">
+                  API Connected
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {state.message}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

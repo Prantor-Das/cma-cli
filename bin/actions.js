@@ -131,7 +131,7 @@ export default function ApiMessage() {
   const [message, setMessage] = useState("Loading...");
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api")
+    axios.get("http://localhost:8000/api")
       .then((res) => setMessage(res.data.message))
       .catch((err) => {
         console.error(err);
@@ -150,7 +150,7 @@ export default function ApiMessage() {
   const [message, setMessage] = useState<string>("Loading...");
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api")
+    axios.get("http://localhost:8000/api")
       .then((res) => setMessage(res.data.message))
       .catch((err) => {
         console.error(err);

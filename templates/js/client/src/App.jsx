@@ -1,22 +1,23 @@
-import ThemeToggle from "./components/ThemeToggle";
-import ApiMessage from "./components/ApiMessage";
-import { useTheme } from "./ThemeContext";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import Layout from "./Layout";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Users from "./pages/Users";
+import NotFound from "./pages/NotFound";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "about", element: <About /> },
+      { path: "users", element: <Users /> },
+      { path: "*", element: <NotFound /> },
+    ],
+  },
+]);
 
 export default function App() {
-  const { darkMode, toggleTheme } = useTheme();
-
-  return (
-    <div>
-      <h1 className="text-3xl font-bold text-emerald-500 mb-4">
-        MERN App Starter 🚀
-      </h1>
-
-      <ApiMessage />
-
-      <ThemeToggle
-        darkMode={darkMode}
-        onToggle={toggleTheme}
-      />
-    </div>
-  );
+  return <RouterProvider router={router} />;
 }
