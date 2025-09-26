@@ -1,18 +1,45 @@
 {
-  "name": "create-mern-app",
+  "name": "cma-cli",
   "version": "1.0.0",
-  "description": "CLI to scaffold MERN fullstack apps",
-  "main": "index.js",
+  "description": "A CLI tool to scaffold a modern MERN stack application with a single command.",
+  "main": "bin/index.js",
+  "type": "module",
+  "bin": {
+    "cma-cli": "bin/index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bin": {
-    "create-mern-app": "./bin/index.js"
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "keywords": [
+    "mern",
+    "cli",
+    "cma-cli",
+    "create-mern-app",
+    "create-mern-app-cli",
+    "scaffold",
+    "generator",
+    "starter",
+    "react",
+    "node",
+    "express",
+    "mongodb",
+    "typescript",
+    "javascript"
+  ],
+  "author": "Prasoon Kumar and Prantor Das",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prasoonk1204/cma-cli.git"
   },
+  "bugs": {
+    "url": "https://github.com/prasoonk1204/cma-cli/issues"
+  },
+  "homepage": "https://github.com/prasoonk1204/cma-cli#readme",
   "dependencies": {
     "chalk": "^5.6.2",
     "execa": "^9.3.0",

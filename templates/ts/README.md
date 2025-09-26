@@ -1,6 +1,6 @@
-# create-mern-app (TypeScript)
+# cma-cli (Create MERN App CLI) - TypeScript
 
-Stop wasting time on boilerplate — create-mern-app instantly scaffolds a production-ready MERN stack with clean structure, developer tooling, and everything you need to get started. This TypeScript version provides full type safety and enhanced developer experience.
+Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-ready MERN stack with clean structure, developer tooling, and everything you need to get started. This TypeScript version provides full type safety and enhanced developer experience.
 
 ## 🚀 Features
 

@@ -1,6 +1,6 @@
-# create-mern-app (JavaScript)
+# cma-cli (Create MERN App CLI) - JavaScript
 
-Stop wasting time on boilerplate — create-mern-app instantly scaffolds a production-ready MERN stack with clean structure, developer tooling, and everything you need to get started.
+Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-ready MERN stack with clean structure, developer tooling, and everything you need to get started.
 
 ## 🚀 Features
 
