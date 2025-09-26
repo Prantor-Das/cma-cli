@@ -1,20 +1,15 @@
 import { ChevronRight } from "lucide-react";
 
-const DocumentationCard = ({ icon: Icon, title, description, items }) => (
+const DocumentationCard = ({ icon: Icon, title, items }) => (
     <div className="rounded-xl border bg-white border-zinc-200 dark:bg-zinc-900/80 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all duration-300">
         <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
                     <Icon className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
                 </div>
-                <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
-                        {title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-zinc-400 leading-relaxed">
-                        {description}
-                    </p>
-                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100">
+                    {title}
+                </h3>
             </div>
 
             <div className="space-y-3">
