@@ -14,8 +14,10 @@
     "create-mern-app": "./bin/index.js"
   },
   "dependencies": {
-    "inquirer": "^12.9.3",
+    "chalk": "^5.6.2",
+    "execa": "^9.3.0",
+    "figlet": "^1.9.3",
     "fs-extra": "^11.2.0",
-    "execa": "^9.3.0"
+    "inquirer": "^12.9.3"
   }
 }
