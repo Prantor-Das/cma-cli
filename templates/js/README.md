@@ -1,6 +1,6 @@
-# MERN Stack Starter (JavaScript)
+# create-mern-app (JavaScript)
 
-A modern, full-stack application template built with the MERN stack (MongoDB, Express.js, React, Node.js) using JavaScript.
+Stop wasting time on boilerplate — create-mern-app instantly scaffolds a production-ready MERN stack with clean structure, developer tooling, and everything you need to get started.
 
 ## 🚀 Features
 

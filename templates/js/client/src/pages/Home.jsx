@@ -17,19 +17,19 @@ export default function Home() {
             {/* Header */}
             <div className="space-y-4 max-w-5xl mx-auto flex items-center justify-between flex-col sm:flex-row ">
                 <div>
-                    <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
                         MERN Stack Starter
                     </h1>
-                    <p className="text-gray-600 dark:text-zinc-400 text-lg">
-                        A modern, full-stack application template
+                    <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
+                        Instantly scaffold a production-ready MERN stack app with clean structure and dev tooling
                     </p>
                 </div>
-                <div className="pt-0 flex flex-col items-center space-y-2">
+                <div className="pt-0 flex flex-col items-center space-y-2 w-48">
                     <a
-                        href="https://github.com"
+                        href="https://github.com/prasoonk1204/create-mern-app"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-md text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
+                        className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-md text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
                     >
                         View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
                     </a>
@@ -37,7 +37,7 @@ export default function Home() {
                         href="https://npmjs.com/package"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-zinc-950 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-zinc-700 rounded-md text-sm font-medium transition w-full"
+                        className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-red-500 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-red-700 rounded-md text-sm font-medium transition w-full"
                     >
                         View on NPM <ArrowUpRight className="w-4 h-4 ml-1" />
                     </a>
@@ -73,12 +73,12 @@ export default function Home() {
             </div>
 
             {/* Documentation Section */}
-            <div className="space-y-6">
-                <div className="text-center mb-6">
+            <div className="space-y-6 max-w-5xl mx-auto">
+                <div className="mb-6">
                     <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
                         Getting Started Guide
                     </h2>
-                    <p className="text-gray-600 dark:text-zinc-400 text-lg max-w-2xl mx-auto">
+                    <p className="text-gray-600 dark:text-zinc-400 text-lg">
                         Follow these steps to customize your MERN stack
                         application and make it your own
                     </p>
