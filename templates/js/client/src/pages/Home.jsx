@@ -21,12 +21,13 @@ export default function Home() {
                         MERN Stack Starter
                     </h1>
                     <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
-                        Instantly scaffold a production-ready MERN stack app with clean structure and dev tooling
+                        Instantly scaffold a production-ready MERN stack app
+                        with clean structure and dev tooling
                     </p>
                 </div>
                 <div className="pt-0 flex flex-col items-center space-y-2 w-48">
                     <a
-                        href="https://github.com/prasoonk1204/create-mern-app"
+                        href="https://github.com/prasoonk1204/cma-cli"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-md text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
@@ -34,7 +35,7 @@ export default function Home() {
                         View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
                     </a>
                     <a
-                        href="https://npmjs.com/package"
+                        href="https://npmjs.com/package/cma-cli"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-red-500 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-red-700 rounded-md text-sm font-medium transition w-full"
@@ -158,7 +159,7 @@ export default function Home() {
                 </p>
                 <Person
                     id="prasoon"
-                    image="https://ik.imagekit.io/kenma/create-mern-app/kenmapfp.jpeg?updatedAt=1758906879005"
+                    image="https://ik.imagekit.io/kenma/cma-cli/kenmapfp.jpeg?updatedAt=1758917892139"
                     alt="Prasoon"
                     links={{
                         github: "https://github.com/prasoonk1204",
@@ -170,7 +171,7 @@ export default function Home() {
                 />
                 <Person
                     id="prantor"
-                    image="https://ik.imagekit.io/kenma/create-mern-app/akashipfp.jpg?updatedAt=1758906903280"
+                    image="https://ik.imagekit.io/kenma/cma-cli/akashipfp.jpg?updatedAt=1758917892027"
                     alt="Prantor"
                     links={{
                         github: "https://github.com/Prantor-Das",

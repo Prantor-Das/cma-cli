@@ -10,7 +10,7 @@ export default function Navigation() {
 
                     <Link to="/" className="flex items-center space-x-2">
                         <h1 className="font-mono font-semibold text-xl text-gray-900 dark:text-white">
-                            create-mern-app
+                            cma-cli
                         </h1>
                     </Link>
 
