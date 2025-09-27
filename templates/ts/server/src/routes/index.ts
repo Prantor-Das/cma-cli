@@ -5,7 +5,7 @@ import { ApiResponse } from "../types/index.js";
 const router = Router();
 
 // API health check
-router.get("/", (req: Request, res: Response) => {
+router.get("/", (_req: Request, res: Response) => {
   const response: ApiResponse = {
     message: "🚀 MERN API is running successfully!",
     data: {

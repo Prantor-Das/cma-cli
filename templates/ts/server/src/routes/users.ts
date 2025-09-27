@@ -1,6 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 import User, { IUser } from "../models/user.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
+import generateToken from "../utils/generateToken.js";
+import { sanitizeQuery } from "../middleware/querySanitizer.js";
 
 const router = Router();
 
@@ -9,8 +12,8 @@ interface PaginationQuery {
   limit?: string;
 }
 
-// Get all users
-router.get("/", async (req: Request<{}, {}, {}, PaginationQuery>, res: Response, next: NextFunction) => {
+// Get all users (admin only)
+router.get("/", protect, admin, sanitizeQuery, async (req: Request<Record<string, never>, Record<string, never>, Record<string, never>, PaginationQuery>, res: Response, next: NextFunction) => {
   try {
     const page = parseInt(req.query.page || "1");
     const limit = parseInt(req.query.limit || "10");
@@ -38,8 +41,8 @@ router.get("/", async (req: Request<{}, {}, {}, PaginationQuery>, res: Response,
   }
 });
 
-// Get user by ID
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Get user by ID (admin only)
+router.get("/:id", protect, admin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
     
@@ -48,8 +51,8 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
     }
 
     res.json(user);
-  } catch (error: any) {
-    if (error.name === "CastError") {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'name' in error && error.name === "CastError") {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     next(error);
@@ -82,21 +85,63 @@ router.post("/", [
     const user = new User({ name, email, password });
     await user.save();
 
+    const token = generateToken(user._id);
+
     // Remove password from response
     const userResponse = user.toObject();
-    delete (userResponse as any).password;
+    delete (userResponse as unknown as Record<string, unknown>).password;
 
     res.status(201).json({
       message: "User created successfully",
-      user: userResponse
+      user: userResponse,
+      token
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Update user
-router.put("/:id", [
+// User login
+router.post("/login", [
+  body("email").isEmail().normalizeEmail().withMessage("Please provide a valid email"),
+  body("password").exists().withMessage("Password is required")
+], async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: "Validation failed",
+        errors: errors.array()
+      });
+    }
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (user && (await user.comparePassword(password))) {
+      // Generate token
+      const token = generateToken(user._id);
+
+      // Remove password from response
+      const userResponse = user.toObject();
+      delete (userResponse as unknown as Record<string, unknown>).password;
+
+      res.json({
+        message: "Login successful",
+        user: userResponse,
+        token
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user (admin only)
+router.put("/:id", protect, admin, [
   body("name").optional().trim().isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
   body("email").optional().isEmail().normalizeEmail().withMessage("Please provide a valid email")
 ], async (req: Request, res: Response, next: NextFunction) => {
@@ -129,19 +174,19 @@ router.put("/:id", [
       message: "User updated successfully",
       user
     });
-  } catch (error: any) {
-    if (error.name === "CastError") {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'name' in error && error.name === "CastError") {
       return res.status(400).json({ message: "Invalid user ID" });
     }
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
       return res.status(409).json({ message: "Email already exists" });
     }
     next(error);
   }
 });
 
-// Delete user
-router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
+// Delete user (admin only)
+router.delete("/:id", protect, admin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     
@@ -150,8 +195,8 @@ router.delete("/:id", async (req: Request, res: Response, next: NextFunction) =>
     }
 
     res.json({ message: "User deleted successfully" });
-  } catch (error: any) {
-    if (error.name === "CastError") {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'name' in error && error.name === "CastError") {
       return res.status(400).json({ message: "Invalid user ID" });
     }
     next(error);

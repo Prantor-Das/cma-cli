@@ -9,7 +9,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 -   **Development Tools**: Hot reload, ESLint with TypeScript, Vite
 -   **UI Components**: Tailwind CSS with typed custom components
 -   **Testing**: Vitest with React Testing Library and TypeScript
--   **Security**: Helmet, CORS, Rate limiting, Compression
+-   **Security**: JWT Authentication, Helmet, CORS, Rate limiting, Compression, Query Sanitization
 -   **Database**: MongoDB with Mongoose ODM and TypeScript schemas
 -   **Validation**: Express Validator with TypeScript types
 -   **Error Handling**: Centralized error handling with typed errors
@@ -52,7 +52,9 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   │   ├── config/         # Database configuration
 │   │   │   └── connectDB.ts
 │   │   ├── middleware/     # Custom middleware
-│   │   │   └── errorMiddleware.ts
+│   │   │   ├── authMiddleware.ts
+│   │   │   ├── errorMiddleware.ts
+│   │   │   └── querySanitizer.ts
 │   │   ├── models/         # Mongoose models with TypeScript interfaces
 │   │   │   └── user.ts
 │   │   ├── routes/         # API routes
@@ -60,6 +62,8 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   │   │   └── users.ts
 │   │   ├── types/          # TypeScript type definitions
 │   │   │   └── index.ts
+│   │   ├── utils/
+│   │   │   └── generateToken.ts
 │   │   ├── __tests__/      # Server tests
 │   │   │   └── server.test.ts
 │   │   └── server.ts       # Server entry point
@@ -176,7 +180,7 @@ CLIENT_URL=http://localhost:5173
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=7d
+JWT_EXPIRE=30d
 
 # Security
 BCRYPT_ROUNDS=12
