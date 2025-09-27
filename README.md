@@ -20,17 +20,23 @@ A simple and powerful CLI tool to scaffold a modern MERN stack application with 
 - **Server & Client Structure:** A clean and separated structure for the client and server.
 - **Example API:** An example API endpoint to get you started.
 
-## Installation
+## Installation  
 
-To install `cma-cli` globally, run the following command:
+You can install **`cma-cli`** either locally or globally.  
 
+### 1. Local Installation and Usage
+Run the following command:  
+```bash
+npx cma-cli
+```
+
+### 2. Global Installation and Usage 
+First, install the CLI globally:
 ```bash
 npm install -g cma-cli
 ```
 
-## Usage
-
-Once installed, you can create a new MERN stack application by running:
+Once installed, you can create a new MERN stack application anywhere by running:
 
 ```bash
 cma-cli

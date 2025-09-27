@@ -12,16 +12,9 @@ import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
 
-// Environment variable validation
-const requiredEnvVars = ['NODE_ENV'];
-requiredEnvVars.forEach(envVar => {
-  if (!process.env[envVar]) {
-    console.warn(`⚠️  Warning: ${envVar} is not set, using default value`);
-  }
-});
-
 const app = express();
 app.disable("x-powered-by");
+
 const PORT = process.env.PORT || 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
@@ -46,13 +39,13 @@ app.use(compression());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: "Too many requests from this IP, please try again later."
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS
 const corsOptions = {
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
@@ -60,7 +53,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Body parsing middleware with security limits
+// Body parsing
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
@@ -71,7 +64,7 @@ if (NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
-// Health check endpoint
+// Health check
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -81,42 +74,34 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API routes
+// Routes
 app.use("/api", routes);
 
-// Error handling middleware
+// Error handlers
 app.use(notFound);
 app.use(errorHandler);
 
-async function startServer() {
-  try {
-    // Connect to database if MongoDB URI is provided
-    if (process.env.MONGODB_URI) {
-      await connectDB();
-      console.log("✅ Database connected successfully");
-    } else {
-      console.log("⚠️  No MongoDB URI provided, running without database");
-    }
+// Start server only if not running in test
+if (process.env.NODE_ENV !== "test") {
+  (async () => {
+    try {
+      if (process.env.MONGODB_URI) {
+        await connectDB();
+        console.log("✅ Database connected successfully");
+      } else {
+        console.log("⚠️ No MongoDB URI provided, running without database");
+      }
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
-      console.log(`📊 Health check available at http://localhost:${PORT}/health`);
-    });
-  } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
-    process.exit(1);
-  }
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
+        console.log(`📊 Health check at http://localhost:${PORT}/health`);
+      });
+    } catch (error) {
+      console.error("❌ Failed to start server:", error.message);
+      process.exit(1);
+    }
+  })();
 }
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down gracefully");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down gracefully");
-  process.exit(0);
-});
-
-startServer();
+// Export app for testing
+export default app;
