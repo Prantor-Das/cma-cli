@@ -1,6 +1,22 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LucideIcon } from "lucide-react";
 
-const DocumentationCard = ({ icon: Icon, title, items }) => (
+interface DocumentationItem {
+    title: string;
+    code?: string;
+    description: string;
+}
+
+interface DocumentationCardProps {
+    icon: LucideIcon;
+    title: string;
+    items: DocumentationItem[];
+}
+
+const DocumentationCard = ({
+    icon: Icon,
+    title,
+    items,
+}: DocumentationCardProps) => (
     <div className="rounded-xl border bg-white border-zinc-200 dark:bg-zinc-900/80 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all duration-300">
         <div className="p-6">
             <div className="flex items-center gap-3 mb-4">

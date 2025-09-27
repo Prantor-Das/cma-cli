@@ -1,205 +1,182 @@
 import { useState } from "react";
-import { Code2, Database, Globe, Zap, ExternalLink } from "lucide-react";
+import { ArrowUpRight, Heart, Server, Palette } from "lucide-react";
 import ApiMessage from "../components/ApiMessage";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
-import Button from "../components/ui/Button";
-
-interface Feature {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}
-
-const features: Feature[] = [
-  {
-    icon: Code2,
-    title: "Modern Stack",
-    description: "Built with React, Node.js, Express, and MongoDB"
-  },
-  {
-    icon: Zap,
-    title: "Fast Development",
-    description: "Hot reload, TypeScript support, and modern tooling"
-  },
-  {
-    icon: Database,
-    title: "Database Ready",
-    description: "MongoDB integration with Mongoose ODM"
-  },
-  {
-    icon: Globe,
-    title: "Production Ready",
-    description: "Optimized builds and deployment configurations"
-  }
-];
-
-type TabType = "overview" | "api" | "docs";
+import Person from "../components/ui/Person";
+import DocumentationCard from "../components/ui/DocumentationCard";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+    const [openId, setOpenId] = useState<string | null>(null);
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          MERN Stack Starter
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          A modern, full-stack application template
-        </p>
-      </div>
-
-      {/* Navigation Tabs */}
-      <nav className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-        {(["overview", "api", "docs"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
-              activeTab === tab
-                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </nav>
-
-      {/* Content */}
-      <main className="animate-fade-in">
-        {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
-                <Card key={index} className="animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-                  <CardHeader className="pb-3">
-                    <feature.icon className="h-8 w-8 text-blue-600 mb-2" />
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>{feature.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
+    return (
+        <div className="space-y-12 my-4">
+            {/* Header */}
+            <div className="space-y-4 max-w-5xl mx-auto flex items-center justify-between flex-col sm:flex-row ">
+                <div>
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                        MERN Stack Starter
+                    </h1>
+                    <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
+                        Instantly scaffold a production-ready MERN stack app
+                        with clean structure and dev tooling
+                    </p>
+                </div>
+                <div className="pt-0 flex flex-col items-center space-y-2 w-48">
+                    <a
+                        href="https://github.com/prasoonk1204/create-mern-app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-md text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
+                    >
+                        View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
+                    </a>
+                    <a
+                        href="https://npmjs.com/package"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-red-500 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-red-700 rounded-md text-sm font-medium transition w-full"
+                    >
+                        View on NPM <ArrowUpRight className="w-4 h-4 ml-1" />
+                    </a>
+                </div>
             </div>
 
-            {/* Quick Start */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Start</CardTitle>
-                <CardDescription>
-                  Get your MERN application up and running in minutes
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <code className="text-sm">
-                    npm run dev
-                  </code>
+            {/* API Endpoint and Status */}
+            <div className="rounded-xl max-w-5xl mx-auto border bg-white border-zinc-200 dark:bg-zinc-900/80 dark:border-zinc-800">
+                <div className="flex flex-col space-y-1.5 p-6">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight dark:text-zinc-100">
+                        Test API Endpoint & Status
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-zinc-400">
+                        Check the connection and health of your backend API
+                    </p>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  This will start both the client and server in development mode with hot reload.
+                <div className="p-6 pt-0 flex flex-col md:flex-row justify-between gap-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-800 rounded-lg w-full">
+                        <div>
+                            <span className="font-mono text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                                GET
+                            </span>
+                            <span className="ml-3 font-mono text-gray-900 dark:text-zinc-100">
+                                /api
+                            </span>
+                        </div>
+                        <span className="text-sm text-gray-600 dark:text-zinc-400">
+                            Health check
+                        </span>
+                    </div>
+                    <ApiMessage />
+                </div>
+            </div>
+
+            {/* Documentation Section */}
+            <div className="space-y-6 max-w-5xl mx-auto">
+                <div className="mb-6">
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                        Getting Started Guide
+                    </h2>
+                    <p className="text-gray-600 dark:text-zinc-400 text-lg">
+                        Follow these steps to customize your MERN stack
+                        application and make it your own
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <DocumentationCard
+                        icon={Palette}
+                        title="Client Setup"
+                        items={[
+                            {
+                                title: "Environment Variables",
+                                code: "client/.env",
+                                description:
+                                    "Add your API URL, app name, and other client configuration",
+                            },
+                            {
+                                title: "Remove Demo Content",
+                                code: "client/src/pages/Home.tsx",
+                                description:
+                                    "Replace this homepage content with your own landing page",
+                            },
+                            {
+                                title: "Clean Up Components",
+                                code: "client/src/components/ApiMessage.tsx",
+                                description:
+                                    "Remove demo components like ApiMessage, Person cards after setup",
+                            },
+                            {
+                                title: "Delete .gitkeep files",
+                                code: "client/src/**/.gitkeep",
+                                description:
+                                    "Delete placeholder .gitkeep files from different directories in client/src",
+                            },
+                        ]}
+                    />
+
+                    <DocumentationCard
+                        icon={Server}
+                        title="Server Setup"
+                        items={[
+                            {
+                                title: "Environment Variables",
+                                code: "server/.env",
+                                description:
+                                    "Set your MongoDB URI, JWT secret, and other server configuration",
+                            },
+                            {
+                                title: "Database Models",
+                                code: "server/src/models/",
+                                description:
+                                    "Create or modify models for your data structure (remove User model if not needed)",
+                            },
+                            {
+                                title: "Remove Demo Api Routes",
+                                code: "server/src/routes/users.ts",
+                                description:
+                                    "Delete sample user routes and create routes specific to your app",
+                            },
+                            {
+                                title: "Update Route Index",
+                                code: "server/src/routes/index.ts",
+                                description:
+                                    "Register your new routes and remove unused demo route imports",
+                            },
+                        ]}
+                    />
+                </div>
+            </div>
+
+            {/* Developer Info */}
+            <div className="flex justify-center items-center gap-4 mt-14">
+                <p className="text-gray-600 dark:text-zinc-400">
+                    Built with{" "}
+                    <Heart className="inline-block w-5 h-5 fill-red-500 animate-bounce text-red-500" />{" "}
+                    by
                 </p>
-                <div className="flex gap-2">
-                  <Button size="sm">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Documentation
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Example Projects
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "api" && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>API Status</CardTitle>
-                <CardDescription>
-                  Check the connection to your backend API
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ApiMessage />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>API Endpoints</CardTitle>
-                <CardDescription>
-                  Available endpoints in your application
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div>
-                      <span className="font-mono text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                        GET
-                      </span>
-                      <span className="ml-3 font-mono">/api</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Health check
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div>
-                      <span className="font-mono text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                        GET
-                      </span>
-                      <span className="ml-3 font-mono">/api/users</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Get all users
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "docs" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentation</CardTitle>
-              <CardDescription>
-                Learn how to build with this MERN stack template
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="prose dark:prose-invert max-w-none">
-              <h3>Getting Started</h3>
-              <p>
-                This template provides a solid foundation for building full-stack applications
-                with the MERN stack (MongoDB, Express, React, Node.js).
-              </p>
-              
-              <h3>Project Structure</h3>
-              <ul>
-                <li><strong>client/</strong> - React frontend application</li>
-                <li><strong>server/</strong> - Express backend API</li>
-                <li><strong>shared/</strong> - Shared utilities and types</li>
-              </ul>
-
-              <h3>Development</h3>
-              <p>
-                Run <code>npm run dev</code> to start both client and server in development mode.
-                The client will be available at <code>http://localhost:5173</code> and the API
-                at <code>http://localhost:8000</code>.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </main>
-    </div>
-  );
+                <Person
+                    id="prasoon"
+                    image="https://ik.imagekit.io/kenma/create-mern-app/kenmapfp.jpeg?updatedAt=1758906879005"
+                    alt="Prasoon"
+                    links={{
+                        github: "https://github.com/prasoonk1204",
+                        twitter: "https://x.com/kenma_dev",
+                        linkedin: "https://linkedin.com/in/prasoonk1204",
+                    }}
+                    openId={openId}
+                    setOpenId={setOpenId}
+                />
+                <Person
+                    id="prantor"
+                    image="https://ik.imagekit.io/kenma/create-mern-app/akashipfp.jpg?updatedAt=1758906903280"
+                    alt="Prantor"
+                    links={{
+                        github: "https://github.com/Prantor-Das",
+                        twitter: "https://x.com/akashi_sde",
+                        linkedin: "https://www.linkedin.com/in/prantor-das",
+                    }}
+                    openId={openId}
+                    setOpenId={setOpenId}
+                />
+            </div>
+        </div>
+    );
 }
