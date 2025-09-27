@@ -8,7 +8,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 -   **Development Tools**: Hot reload, ESLint, Vite
 -   **UI Components**: Tailwind CSS with custom components
 -   **Testing**: Vitest with React Testing Library
--   **Security**: Helmet, CORS, Rate limiting, Compression
+-   **Security**: JWT Authentication, Helmet, CORS, Rate limiting, Compression, Query Sanitization
 -   **Database**: MongoDB with Mongoose ODM
 -   **Validation**: Express Validator
 -   **Error Handling**: Centralized error handling
@@ -48,12 +48,16 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   │   ├── config/         # Database configuration
 │   │   │   └── connectDB.js
 │   │   ├── middleware/     # Custom middleware
-│   │   │   └── errorMiddleware.js
+│   │   │   ├── authMiddleware.js
+│   │   │   ├── errorMiddleware.js
+│   │   │   └── querySanitizer.js
 │   │   ├── models/         # Mongoose models
 │   │   │   └── user.js
 │   │   ├── routes/         # API routes
 │   │   │   ├── index.js
 │   │   │   └── users.js
+│   │   ├── utils/
+│   │   │   └── generateToken.js
 │   │   ├── __tests__/      # Server tests
 │   │   │   └── server.test.js
 │   │   └── server.js       # Server entry point
@@ -147,7 +151,7 @@ CLIENT_URL=http://localhost:5173
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=7d
+JWT_EXPIRE=30d
 
 # Security
 BCRYPT_ROUNDS=12

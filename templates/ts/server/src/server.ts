@@ -12,12 +12,36 @@ import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
 
+// Environment variable validation
+const requiredEnvVars = ['NODE_ENV'];
+requiredEnvVars.forEach(envVar => {
+  if (!process.env[envVar]) {
+    console.warn(`⚠️  Warning: ${envVar} is not set, using default value`);
+  }
+});
+
 const app = express();
+app.disable("x-powered-by");
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(compression());
 
 // Rate limiting
@@ -36,9 +60,9 @@ const corsOptions: CorsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// Body parsing middleware with security limits
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // Logging
 if (NODE_ENV === "development") {

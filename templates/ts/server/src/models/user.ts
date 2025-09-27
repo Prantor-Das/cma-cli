@@ -2,6 +2,7 @@ import { Schema, model, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IUser extends Document {
+  _id: string;
   name: string;
   email: string;
   password: string;
@@ -48,7 +49,7 @@ const userSchema = new Schema<IUser>({
 }, {
   timestamps: true,
   toJSON: {
-    transform: function(doc, ret) {
+    transform: function(_doc, ret: { password?: string }) {
       delete ret.password;
       return ret;
     }
@@ -63,8 +64,8 @@ userSchema.pre("save", async function(next) {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error: any) {
-    next(error);
+  } catch (error: unknown) {
+    next(error as Error);
   }
 });
 

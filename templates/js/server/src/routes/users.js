@@ -1,14 +1,17 @@
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import User from "../models/user.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
+import generateToken from "../utils/generateToken.js";
+import { sanitizeQuery } from "../middleware/querySanitizer.js";
 
 const router = Router();
 
-// Get all users
-router.get("/", async (req, res, next) => {
+// Get all users (admin only)
+router.get("/", protect, admin, sanitizeQuery, async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
     const skip = (page - 1) * limit;
 
     const users = await User.find()
@@ -33,8 +36,8 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Get user by ID
-router.get("/:id", async (req, res, next) => {
+// Get user by ID (admin only)
+router.get("/:id", protect, admin, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
     
@@ -77,21 +80,64 @@ router.post("/", [
     const user = new User({ name, email, password });
     await user.save();
 
+    // Generate token
+    const token = generateToken(user._id);
+
     // Remove password from response
     const userResponse = user.toObject();
     delete userResponse.password;
 
     res.status(201).json({
       message: "User created successfully",
-      user: userResponse
+      user: userResponse,
+      token
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Update user
-router.put("/:id", [
+// User login
+router.post("/login", [
+  body("email").isEmail().normalizeEmail().withMessage("Please provide a valid email"),
+  body("password").exists().withMessage("Password is required")
+], async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: "Validation failed",
+        errors: errors.array()
+      });
+    }
+
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (user && (await user.comparePassword(password))) {
+      // Generate token
+      const token = generateToken(user._id);
+
+      // Remove password from response
+      const userResponse = user.toObject();
+      delete userResponse.password;
+
+      res.json({
+        message: "Login successful",
+        user: userResponse,
+        token
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user (admin only)
+router.put("/:id", protect, admin, [
   body("name").optional().trim().isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
   body("email").optional().isEmail().normalizeEmail().withMessage("Please provide a valid email")
 ], async (req, res, next) => {
@@ -135,8 +181,8 @@ router.put("/:id", [
   }
 });
 
-// Delete user
-router.delete("/:id", async (req, res, next) => {
+// Delete user (admin only)
+router.delete("/:id", protect, admin, async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     

@@ -38,9 +38,10 @@ export default function Home() {
                         href="https://npmjs.com/package/cma-cli"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-red-500 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-red-700 rounded-md text-sm font-medium transition w-full"
+                        className="inline-flex justify-center items-center px-4 py-2 bg-zinc-100 text-zinc-950 border border-zinc-950 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 dark:text-gray-100 dark:border-zinc-700 rounded-md text-sm font-medium transition w-full"
                     >
-                        View on NPM <ArrowUpRight className="w-4 h-4 ml-1" />
+                        View on&nbsp;<span className="text-red-500 dark:text-red-400">NPM</span>
+                        <ArrowUpRight className="w-4 h-4 ml-1" />
                     </a>
                 </div>
             </div>
@@ -137,7 +138,7 @@ export default function Home() {
                                 title: "Remove Demo Api Routes",
                                 code: "server/src/routes/users.js",
                                 description:
-                                    "Delete sample user routes and create routes specific to your app",
+                                    "Delete or modify sample auth and user routes. Create routes specific to your app",
                             },
                             {
                                 title: "Update Route Index",
