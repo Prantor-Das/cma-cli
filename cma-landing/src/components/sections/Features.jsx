@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Terminal, Code, Layers, Moon, ServerCog, Rocket } from "lucide-react";
 
 const features = [
@@ -56,7 +55,7 @@ const features = [
 ];
 
 const Features = () => (
-    <section className="py-20 max-w-7xl mx-auto" id="features">
+    <section className="py-20 max-w-6xl mx-auto" id="features">
         <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">
                 Packed with Features
@@ -70,7 +69,7 @@ const Features = () => (
                 ({ title, description, icon: Icon, gridClass }, index) => (
                     <div
                         key={index}
-                        className={`feature-card-masonry ${gridClass} dark:text-gray-100 p-6 rounded-2xl
+                        className={`feature-card-masonry ${gridClass} dark:text-zinc-100 p-6 rounded-2xl
                 shadow-[0_4px_12px_rgba(0,0,0,0.07)]
                 hover:shadow-[0px_10px_20px_rgba(0,0,0,0.15)]
                 border border-transparent dark:border-zinc-800
@@ -91,7 +90,7 @@ const Features = () => (
                     >
                         <Icon className="w-8 h-8 mb-3 text-green-600 dark:text-green-400" />
                         <p className="text-lg font-semibold mb-2">{title}</p>
-                        <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                             {description}
                         </p>
                     </div>

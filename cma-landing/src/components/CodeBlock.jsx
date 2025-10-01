@@ -27,7 +27,7 @@ export const CodeBlock = ({ code }) => {
             </div>
             <button
                 onClick={copyToClipboard}
-                className="hover:cursor-pointer p-1 text-zinc-400 hover:text-white transition-colors duration-150"
+                className="hover:cursor-pointer p-1 text-zinc-400 hover:text-white transition-all duration-200"
             >
                 {hasCopied ? (
                     <Check className="w-5 h-5 text-green-400" />
@@ -63,7 +63,7 @@ export const InCodeBlock = ({ code }) => {
             </div>
             <button
                 onClick={copyToClipboard}
-                className="hover:cursor-pointer p-1 text-zinc-400 hover:text-zinc-800 transition-colors duration-150"
+                className="hover:cursor-pointer p-1 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-50 transition-all duration-200"
             >
                 {hasCopied ? (
                     <Check className="w-5 h-5 text-green-400" />

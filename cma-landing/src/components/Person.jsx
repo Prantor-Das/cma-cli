@@ -28,7 +28,7 @@ export default function Person({ id, image, alt, links, openId, setOpenId }) {
                 <img
                     src={image}
                     alt={alt}
-                    className="w-12 h-12 rounded-full border-2 border-gray-300 dark:border-zinc-700 cursor-pointer"
+                    className="w-12 h-12 rounded-full border-1 border-zinc-300 dark:border-zinc-700 cursor-pointer"
                 />
             </button>
 

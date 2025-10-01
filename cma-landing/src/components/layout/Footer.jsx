@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { Heart } from "lucide-react";
 import Person from "../Person";
+import {
+    PRASOON_LINKS,
+    PRANTOR_LINKS,
+    GITHUB_REPO_LINK,
+    NPM_PACKAGE_LINK,
+} from "@/context/constants";
+import Link from "next/link";
 
 const Footer = () => {
     const [openId, setOpenId] = useState(null);
@@ -19,34 +26,24 @@ const Footer = () => {
                             </p>
                         </div>
                         <div className="mt-6 flex items-center gap-4">
-                            <p className="text-gray-600 dark:text-zinc-400">
+                            <p className="text-zinc-600 dark:text-zinc-400">
                                 Built with{" "}
                                 <Heart className="inline-block w-5 h-5 fill-red-500 animate-bounce text-red-500" />{" "}
                                 by
                             </p>
                             <Person
                                 id="prasoon"
-                                image="https://ik.imagekit.io/kenma/cma-cli/kenmapfp.jpeg?updatedAt=1758917892139"
+                                image={PRASOON_LINKS.img}
                                 alt="Prasoon"
-                                links={{
-                                    github: "https://github.com/prasoonk1204",
-                                    twitter: "https://x.com/kenma_dev",
-                                    linkedin:
-                                        "https://linkedin.com/in/prasoonk1204",
-                                }}
+                                links={PRASOON_LINKS}
                                 openId={openId}
                                 setOpenId={setOpenId}
                             />
                             <Person
                                 id="prantor"
-                                image="https://ik.imagekit.io/kenma/cma-cli/akashipfp.jpg?updatedAt=1758917892027"
+                                image={PRANTOR_LINKS.img}
                                 alt="Prantor"
-                                links={{
-                                    github: "https://github.com/Prantor-Das",
-                                    twitter: "https://x.com/akashi_sde",
-                                    linkedin:
-                                        "https://www.linkedin.com/in/prantor-das",
-                                }}
+                                links={PRANTOR_LINKS}
                                 openId={openId}
                                 setOpenId={setOpenId}
                             />
@@ -56,24 +53,24 @@ const Footer = () => {
                         <h3 className="text-lg font-bold">Quick Links</h3>
                         <ul className="mt-4 space-y-2">
                             <li>
-                                <a
-                                    href="#features"
+                                <Link
+                                    href="/"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
                                 >
-                                    Features
-                                </a>
+                                    Home
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/docs"
+                                    className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
+                                >
+                                    Docs
+                                </Link>
                             </li>
                             <li>
                                 <a
-                                    href="#installation"
-                                    className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
-                                >
-                                    Installation
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="https://github.com/prasoonk1204/create-mern-app"
+                                    href={GITHUB_REPO_LINK}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
@@ -83,7 +80,7 @@ const Footer = () => {
                             </li>
                             <li>
                                 <a
-                                    href="https://www.npmjs.com/package/cma-cli"
+                                    href={NPM_PACKAGE_LINK}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"

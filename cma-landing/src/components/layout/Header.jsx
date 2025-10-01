@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Github, Package } from "lucide-react";
 import ThemeToggle from "../ThemeToggle";
+import { GITHUB_REPO_LINK, NPM_PACKAGE_LINK } from "@/context/constants";
 
 const Header = () => {
     return (
@@ -18,24 +19,24 @@ const Header = () => {
                         </span>
                     </Link>
                     <nav className="items-center space-x-6 font-medium hidden md:flex">
-                        <a
-                            href="#features"
+                        <Link
+                            href="/"
                             className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200"
                         >
-                            Features
-                        </a>
-                        <a
-                            href="#installation"
-                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-20"
+                            Home
+                        </Link>
+                        <Link
+                            href="/docs"
+                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200"
                         >
-                            Installation
-                        </a>
+                            Docs
+                        </Link>
                     </nav>
                 </div>
                 <div className="flex items-center justify-between space-x-2 md:justify-end">
                     <nav className="flex items-center gap-2 sm:gap-4">
                         <a
-                            href="https://github.com/prasoonk1204/cma-cli"
+                            href={GITHUB_REPO_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-150"
@@ -44,7 +45,7 @@ const Header = () => {
                             <span className="hidden sm:block">GitHub</span>
                         </a>
                         <a
-                            href="https://npmjs.com/package/cma-cli"
+                            href={NPM_PACKAGE_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-150"

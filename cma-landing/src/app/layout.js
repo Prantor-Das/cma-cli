@@ -1,7 +1,7 @@
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { ThemeProvider } from "next-themes";
+import { Providers } from "./providers";
 
 export const metadata = {
     title: "cma-cli - Create MERN App",
@@ -13,15 +13,11 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`antialiased bg-zinc-50 dark:bg-zinc-950`}>
-                <ThemeProvider
-                    attribute="data-theme"
-                    defaultTheme="system"
-                    enableSystem
-                >
+                <Providers>
                     <Header />
                     <main>{children}</main>
                     <Footer />
-                </ThemeProvider>
+                </Providers>
             </body>
         </html>
     );
