@@ -69,7 +69,7 @@ We welcome contributions to `cma-cli`! Please see the [CONTRIBUTING.md](CONTRIBU
 
 To set up your development environment, follow these steps:
 
-1.  **Clone the repository:** `git clone https://github.com/YOUR_USERNAME/create-mern-app.git`
+1.  **Clone the repository:** `git clone https://github.com/prasoonk1204/cma-cli.git`
 2.  **Install dependencies:** `npm install` in the root directory.
 3.  **Link the CLI:** `npm link` to use your local `cma-cli` version globally.
 

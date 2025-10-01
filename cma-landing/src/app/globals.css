@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+html {
+    scroll-behavior: smooth;
+}
+
+.features-grid-bento {
+    display: grid;
+    gap: 1.5rem;
+    padding: 1rem 0;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    grid-auto-rows: minmax(150px, auto);
+}
+
+@media (min-width: 640px) {
+    .features-grid-bento {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .features-grid-bento {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.span-col-2,
+.span-col-3,
+.span-col-4,
+.span-row-2,
+.span-row-3,
+.span-row-4 {
+    grid-column: span 1 !important;
+    grid-row: span 1 !important;
+}
+
+@media (min-width: 1024px) {
+    .span-col-2 {
+        grid-column: span 2 !important;
+    }
+    .span-col-3 {
+        grid-column: span 3 !important;
+    }
+    .span-col-4 {
+        grid-column: span 4 !important;
+    }
+
+    .span-row-2 {
+        grid-row: span 2 !important;
+    }
+    .span-row-3 {
+        grid-row: span 3 !important;
+    }
+    .span-row-4 {
+        grid-row: span 4 !important;
+    }
+}
+
+.feature-card-masonry {
+    backdrop-filter: saturate(180%) blur(10px);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    min-height: 10rem;
+    width: 100%;
+    min-width: 0;
+}
