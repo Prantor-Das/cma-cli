@@ -5,7 +5,7 @@ import { CMA_IMG } from "@/context/constants";
 const Hero = () => {
     return (
         <section className="text-center py-24  flex flex-col justify-center items-center space-y-8 relative overflow-x-hidden">
-            <h1 className="text-4xl md:text-6xl font-bold">
+            <h1 className="text-4xl md:text-6xl xl:text-7xl font-bold">
                 Skip the Boilerplate, <br />
                 Start Building
             </h1>
@@ -22,14 +22,14 @@ const Hero = () => {
                 alt="Hero"
                 width={500}
                 height={500}
-                className="mix-blend-difference absolute -rotate-90 -left-100 md:-left-80 lg:-left-45 scale-110 opacity-50"
+                className="mix-blend-difference absolute -rotate-90 -left-100 md:-left-80 lg:-left-45 xl:scale-110 opacity-50"
             />
             <Image
                 src={CMA_IMG}
                 alt="Hero"
                 width={500}
                 height={500}
-                className="absolute rotate-90 -right-100 md:-right-80 lg:-right-45 scale-110 mix-blend-difference opacity-50"
+                className="absolute rotate-90 -right-100 md:-right-80 lg:-right-45 xl:scale-110 mix-blend-difference opacity-50"
             />
         </section>
     );

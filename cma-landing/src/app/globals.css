@@ -61,7 +61,6 @@ html {
 .feature-card-masonry {
     backdrop-filter: saturate(180%) blur(10px);
     border-radius: 0.75rem;
-    padding: 1.25rem;
     transition: transform 0.3s ease;
     cursor: pointer;
     transform-style: preserve-3d;

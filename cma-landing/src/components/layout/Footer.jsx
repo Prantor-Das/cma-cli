@@ -6,8 +6,8 @@ import Person from "../Person";
 import {
     PRASOON_LINKS,
     PRANTOR_LINKS,
-    GITHUB_REPO_LINK,
-    NPM_PACKAGE_LINK,
+    GOOGLE_FORM,
+    GITHUB_ISSUE_REPORT,
 } from "@/context/constants";
 import Link from "next/link";
 
@@ -54,39 +54,32 @@ const Footer = () => {
                         <ul className="mt-4 space-y-2">
                             <li>
                                 <Link
-                                    href="/"
+                                    href={GOOGLE_FORM}
+                                    target="_blank"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
                                 >
-                                    Home
+                                    Feedback
                                 </Link>
                             </li>
                             <li>
                                 <Link
-                                    href="/docs"
+                                    href={GITHUB_ISSUE_REPORT}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
                                 >
-                                    Docs
+                                    Report an issue
                                 </Link>
                             </li>
                             <li>
-                                <a
-                                    href={GITHUB_REPO_LINK}
+                                <Link
+                                    href="mailto:create.mern.app.cli@gmail.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
                                 >
-                                    GitHub
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href={NPM_PACKAGE_LINK}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white"
-                                >
-                                    npm
-                                </a>
+                                    Mail Us
+                                </Link>
                             </li>
                         </ul>
                     </div>

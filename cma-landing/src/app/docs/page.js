@@ -6,8 +6,8 @@ export default function GettingStartedPage() {
             <section id="introduction" className="mb-12">
                 <h2 className="text-3xl font-semibold mb-4">Introduction</h2>
                 <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                    `create-mern-app` is a command-line interface (CLI) tool
-                    that dramatically speeds up the development of MERN stack
+                    `cma-cli` is a command-line interface (CLI) tool that
+                    dramatically speeds up the development of MERN stack
                     applications. It generates a clean, scalable, and
                     production-ready boilerplate with all the necessary
                     configurations, so you can focus on writing code that
