@@ -5,14 +5,14 @@ const router = Router();
 
 // API health check
 router.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "🚀 MERN API is running successfully!",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
     endpoints: {
       users: "/api/users",
-      health: "/health"
-    }
+      health: "/health",
+    },
   });
 });
 

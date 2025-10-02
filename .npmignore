@@ -24,7 +24,6 @@ Thumbs.db
 
 # Git
 .git/
-.gitignore
 
 # Local environment files
 .env

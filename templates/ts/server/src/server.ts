@@ -13,8 +13,8 @@ import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 dotenv.config();
 
 // Environment variable validation
-const requiredEnvVars = ['NODE_ENV'];
-requiredEnvVars.forEach(envVar => {
+const requiredEnvVars = ["NODE_ENV"];
+requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     console.warn(`⚠️  Warning: ${envVar} is not set, using default value`);
   }
@@ -26,22 +26,24 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(compression());
 
 // Rate limiting
@@ -103,7 +105,7 @@ async function startServer() {
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT} in ${NODE_ENV} mode`);
       console.log(
-        `📊 Health check available at http://localhost:${PORT}/health`
+        `📊 Health check available at http://localhost:${PORT}/health`,
       );
     });
 

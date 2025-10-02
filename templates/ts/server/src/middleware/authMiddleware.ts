@@ -6,14 +6,23 @@ export interface AuthenticatedRequest extends Request {
   user?: IUser;
 }
 
-export const protect = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const protect = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-      req.user = await User.findById(decoded.id).select("-password") as IUser;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+        id: string;
+      };
+      req.user = (await User.findById(decoded.id).select("-password")) as IUser;
       next();
     } catch (error) {
       console.error(error);
@@ -28,7 +37,11 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
   }
 };
 
-export const admin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const admin = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   if (req.user && req.user.role === "admin") {
     next();
   } else {

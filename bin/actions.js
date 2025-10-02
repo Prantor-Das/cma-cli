@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { fileURLToPath } from "url";
 import { execa } from "execa";
+import { getGitHubUsername } from "./questions.js";
 
 async function updatePackageJson(packageJsonPath, projectName, type) {
   const packageJson = await fs.readJson(packageJsonPath);
@@ -53,8 +54,22 @@ async function installDependencies(projectPath, concurrently) {
   }
 }
 
-async function initializeGit(projectPath, gitRepoUrl) {
-  if (gitRepoUrl) {
+async function initializeGit(projectPath, gitRepoInput) {
+  if (gitRepoInput) {
+    const trimmedInput = gitRepoInput.trim();
+    let gitRepoUrl = trimmedInput;
+    
+    // Check if it's already a full GitHub URL
+    const githubUrlPattern = /^https:\/\/github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.git$/;
+    
+    if (!githubUrlPattern.test(trimmedInput)) {
+      // If it's not a full URL, try to construct it using GitHub username
+      const githubUsername = await getGitHubUsername();
+      if (githubUsername && /^[a-zA-Z0-9_-]+$/.test(trimmedInput)) {
+        gitRepoUrl = `https://github.com/${githubUsername}/${trimmedInput}.git`;
+      }
+    }
+    
     await execa("git", ["init"], { cwd: projectPath });
     await execa("git", ["remote", "add", "origin", gitRepoUrl], {
       cwd: projectPath,

@@ -10,6 +10,8 @@
     "test:watch": "vitest --watch",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "clean": "rm -rf node_modules/.cache"
   },
   "dependencies": {
@@ -28,6 +30,7 @@
   "devDependencies": {
     "eslint": "^9.36.0",
     "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "vitest": "^3.2.4"
   }

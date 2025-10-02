@@ -7,18 +7,18 @@ export default defineConfig({
   server: {
     watch: {
       // Ignore backend/server files to prevent unnecessary reloads
-      ignored: ["**/server/**", "**/backend/**", "../server/**"]
+      ignored: ["**/server/**", "**/backend/**", "../server/**"],
     },
-    port: 5173, 
-    open: true  
+    port: 5173,
+    open: true,
   },
   build: {
     outDir: "dist",
-    sourcemap: true 
+    sourcemap: true,
   },
   resolve: {
     alias: {
-      "@": "/src" 
-    }
-  }
+      "@": "/src",
+    },
+  },
 });

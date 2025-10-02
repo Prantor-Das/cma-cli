@@ -13,11 +13,11 @@ router.get("/", (_req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       endpoints: {
         users: "/api/users",
-        health: "/health"
-      }
-    }
+        health: "/health",
+      },
+    },
   };
-  
+
   res.json(response);
 });
 

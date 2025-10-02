@@ -1,7 +1,5 @@
 "use client";
-
 import { Terminal, Code, Layers, Moon, ServerCog, Rocket } from "lucide-react";
-
 const features = [
     {
         title: "Interactive CLI",
@@ -25,10 +23,10 @@ const features = [
         gridClass: "span-col-1 span-row-3",
     },
     {
-        title: "Ready for Production",
+        title: "Concurrent Workspace",
         description:
-            "Optimized and secure setup with deployment best practices included.",
-        icon: Rocket,
+            "Run client and server simultaneously with Concurrently, streamlining development in a unified workspace.",
+        icon: Terminal,
         gridClass: "span-row-2",
     },
     {
@@ -46,14 +44,13 @@ const features = [
         gridClass: "span-col-1",
     },
     {
-        title: "Responsive Design",
+        title: "Ready for Production",
         description:
-            "Ensures your application looks great on all devices, from mobile to desktop.",
-        icon: Layers,
+            "Optimized and secure setup with deployment best practices included.",
+        icon: Rocket,
         gridClass: "span-col-1",
     },
 ];
-
 const Features = () => (
     <section className="py-20 max-w-6xl mx-auto" id="features">
         <div className="text-center mb-12">
@@ -99,5 +96,4 @@ const Features = () => (
         </div>
     </section>
 );
-
 export default Features;

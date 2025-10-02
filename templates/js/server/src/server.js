@@ -19,29 +19,31 @@ const PORT = process.env.PORT || 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false,
-}));
+    crossOriginEmbedderPolicy: false,
+  }),
+);
 app.use(compression());
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: "Too many requests from this IP, please try again later."
+  message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
 
@@ -49,7 +51,7 @@ app.use(limiter);
 const corsOptions = {
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
@@ -70,7 +72,7 @@ app.get("/health", (req, res) => {
     status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: NODE_ENV
+    environment: NODE_ENV,
   });
 });
 

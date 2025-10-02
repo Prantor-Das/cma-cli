@@ -8,9 +8,9 @@ export const NPM_PACKAGE_LINK = "https://www.npmjs.com/package/cma-cli";
 export const PRASOON_LINKS = {
     github: "https://github.com/prasoonk1204",
     twitter: "https://x.com/kenma_dev",
-    linkedin: "https://linkedin.com/in/prasoonk1204",
+    linkedin: "https://linkedin.com/in/prasoon1204",
     img: "https://ik.imagekit.io/kenma/cma-cli/kenmapfp.jpeg?updatedAt=1758917892139",
-}
+};
 
 export const PRANTOR_LINKS = {
     github: "https://github.com/Prantor-Das",
