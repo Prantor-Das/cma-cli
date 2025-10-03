@@ -35,6 +35,10 @@ async function copyTemplateFiles(templateDir, projectPath, concurrently) {
   if (!concurrently) {
     await fs.remove(path.join(projectPath, "package.json"));
   }
+  const gitignorePath = path.join(projectPath, "gitignore");
+  if (await fs.pathExists(gitignorePath)) {
+    await fs.rename(gitignorePath, path.join(projectPath, ".gitignore"));
+  }
 }
 
 async function installDependencies(projectPath, concurrently) {
