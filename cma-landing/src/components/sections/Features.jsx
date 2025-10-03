@@ -18,7 +18,7 @@ const features = [
         gridClass: "span-col-1",
     },
     {
-        title: "Modern Stack (React 18, Node.js, Express)",
+        title: "Modern Stack (React, Node.js, Express, MongoDB)",
         description:
             "Up-to-date technologies ensuring powerful, maintainable full-stack development.",
         icon: Layers,
