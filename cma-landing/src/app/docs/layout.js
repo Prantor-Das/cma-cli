@@ -2,10 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 export default function DocsLayout({ children }) {
     const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname();
+
+    const linkClassName = (href) =>
+        `text-lg font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200/30 hover:dark:bg-zinc-800/40 p-2 rounded-xl transition-all duration-300 ${
+            pathname === href
+                ? "bg-zinc-200/80 dark:bg-zinc-800/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5),0_2px_2px_rgba(0,0,0,0.15)]"
+                : ""
+        }`;
 
     return (
         <div className="flex relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,52 +33,52 @@ export default function DocsLayout({ children }) {
                     </button>
                 </div>
 
-                <nav className="flex flex-col gap-6 p-6 md:p-0">
+                <nav className="flex flex-col gap-3 p-6 md:p-0">
                     <Link
                         href="/docs"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs")}
                         onClick={() => setIsOpen(false)}
                     >
                         Getting Started
                     </Link>
                     <Link
                         href="/docs/project-structure"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/project-structure")}
                         onClick={() => setIsOpen(false)}
                     >
                         Project Structure
                     </Link>
                     <Link
                         href="/docs/javascript"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/javascript")}
                         onClick={() => setIsOpen(false)}
                     >
                         JavaScript
                     </Link>
                     <Link
                         href="/docs/typescript"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/typescript")}
                         onClick={() => setIsOpen(false)}
                     >
                         TypeScript
                     </Link>
                     <Link
                         href="/docs/authentication"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/authentication")}
                         onClick={() => setIsOpen(false)}
                     >
                         Authentication
                     </Link>
                     <Link
                         href="/docs/api-routes"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/api-routes")}
                         onClick={() => setIsOpen(false)}
                     >
                         API Routes
                     </Link>
                     <Link
                         href="/docs/deployment"
-                        className="text-lg font-medium text-zinc-900 dark:text-zinc-100"
+                        className={linkClassName("/docs/deployment")}
                         onClick={() => setIsOpen(false)}
                     >
                         Deployment

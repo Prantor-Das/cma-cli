@@ -39,7 +39,7 @@ const Header = () => {
                             href={GITHUB_REPO_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-150"
+                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
                         >
                             <Github size={18} />
                             <span className="hidden sm:block">GitHub</span>
@@ -48,7 +48,7 @@ const Header = () => {
                             href={NPM_PACKAGE_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-150"
+                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
                         >
                             <Package
                                 size={18}
