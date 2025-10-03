@@ -50,7 +50,7 @@ export const metadata = {
         type: "website",
         images: [
             {
-                url: "/ogBanner.png",
+                url: "https://cmacli.vercel.app/ogBanner.png",
                 width: 1200,
                 height: 630,
                 alt: "cma-cli OG Banner",
@@ -64,7 +64,7 @@ export const metadata = {
         title: "cma-cli - Create MERN App",
         description:
             "A simple and powerful CLI tool to scaffold a modern MERN stack application with a single command.",
-        images: ["/ogBanner.png"],
+        images: ["https://cmacli.vercel.app/ogBanner.png"],
     },
     icons: {
         icon: "/logo.png",
