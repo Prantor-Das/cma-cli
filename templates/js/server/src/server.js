@@ -69,6 +69,7 @@ if (NODE_ENV === "development") {
 // Health check
 app.get("/health", (req, res) => {
   res.status(200).json({
+    message: "Server is running !",
     status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

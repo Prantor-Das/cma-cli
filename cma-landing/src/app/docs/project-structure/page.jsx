@@ -82,10 +82,6 @@ export default function ProjectStructurePage() {
                                 <b>vite.config.js / vite.config.ts</b>: Vite
                                 configuration file.
                             </li>
-                            <li>
-                                <b>tailwind.config.js</b>: Tailwind CSS
-                                configuration.
-                            </li>
                         </ul>
                     </div>
 

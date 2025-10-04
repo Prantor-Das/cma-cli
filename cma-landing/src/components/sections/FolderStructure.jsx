@@ -94,10 +94,6 @@ const FolderStructure = () => {
                             </div>
                             <div className="flex items-center mt-2">
                                 <FileCode size={16} className="mr-2" />
-                                <span>tailwind.config.js</span>
-                            </div>
-                            <div className="flex items-center mt-2">
-                                <FileCode size={16} className="mr-2" />
                                 <span>vite.config.js</span>
                             </div>
                         </div>
@@ -118,6 +114,10 @@ const FolderStructure = () => {
                             <div className="pl-8 border-l border-zinc-300 dark:border-zinc-600 ml-2">
                                 <div className="flex items-center mt-2">
                                     <Folder size={16} className="mr-2" />
+                                    <span>__tests__/</span>
+                                </div>
+                                <div className="flex items-center mt-2">
+                                    <Folder size={16} className="mr-2" />
                                     <span>config/</span>
                                 </div>
                                 <div className="flex items-center mt-2">
@@ -131,10 +131,6 @@ const FolderStructure = () => {
                                 <div className="flex items-center mt-2">
                                     <Folder size={16} className="mr-2" />
                                     <span>routes/</span>
-                                </div>
-                                <div className="flex items-center mt-2">
-                                    <Folder size={16} className="mr-2" />
-                                    <span>__tests__/</span>
                                 </div>
                                 <div className="flex items-center mt-2">
                                     <Folder size={16} className="mr-2" />

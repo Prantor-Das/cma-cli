@@ -4,7 +4,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 
 ## 🚀 Features
 
--   **Modern Stack**: React 18, Node.js, Express, MongoDB
+-   **Modern Stack**: React, Node.js, Express, MongoDB
 -   **Development Tools**: Hot reload, ESLint, Vite
 -   **UI Components**: Tailwind CSS with custom components
 -   **Testing**: Vitest with React Testing Library
@@ -21,27 +21,25 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 ├── client/                 # React frontend
 │   ├── public/             # Static assets
 │   ├── src/
-│   │   ├── assets/         # Static assets (.gitkeep)
+│   │   ├── assets/
 │   │   ├── components/     # Reusable UI components
-│   │   │   ├── ui/         # UI components (DocumentationCard, Person, ThemeToggle)
-│   │   │   ├── ApiMessage.jsx
+│   │   │   ├── ui/         # UI components (ThemeToggle)
 │   │   │   └── Navigation.jsx
 │   │   ├── config/         # Configuration files
 │   │   │   └── constants.js
-│   │   ├── context/        # React contexts (.gitkeep)
+│   │   ├── context/
 │   │   ├── hooks/          # Custom React hooks
 │   │   │   └── useTheme.js
 │   │   ├── pages/          # Page components
-│   │   │   ├── Home.jsx    # Landing page with demo content
+│   │   │   ├── Demo.jsx    # Landing page with demo content
 │   │   │   └── NotFound.jsx # 404 page
-│   │   ├── utils/          # Utility functions (.gitkeep)
+│   │   ├── utils/
 │   │   ├── App.jsx         # Main app with routing
 │   │   ├── Layout.jsx      # Layout wrapper
 │   │   ├── main.jsx        # React entry point
 │   │   └── global.css      # Global styles
 │   ├── index.html          # HTML template
 │   ├── vite.config.js      # Vite configuration
-│   ├── tailwind.config.js  # Tailwind configuration
 │   └── package.json
 ├── server/                 # Express backend
 │   ├── src/
@@ -177,11 +175,8 @@ VITE_API_URL=http://localhost:8000
 
 1. **Client Side**:
 
-    - Update `client/src/pages/Home.jsx` with your content
-    - Remove `client/src/components/ApiMessage.jsx`
-    - Update navigation in `client/src/components/Navigation.jsx`
-    - Customize UI components in `client/src/components/ui/` (DocumentationCard, Person, ThemeToggle)
-    - Remove `.gitkeep` files from empty directories (assets, context, utils)
+    - Remove `client/src/pages/Demo.jsx`
+    - Customize UI components in `client/src/components/ui/` (ThemeToggle)
 
 2. **Server Side**:
     - Remove demo routes in `server/src/routes/users.js`

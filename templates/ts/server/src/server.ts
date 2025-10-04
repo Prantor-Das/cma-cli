@@ -32,7 +32,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-eval'"],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
@@ -76,6 +76,7 @@ if (NODE_ENV === "development") {
 // Health check endpoint
 app.get("/health", (_req, res) => {
   const healthResponse = {
+    message: "Server is running !",
     status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
