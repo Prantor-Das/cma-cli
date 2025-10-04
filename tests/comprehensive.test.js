@@ -659,6 +659,147 @@ describe("CMA CLI Comprehensive Tests", () => {
 
             await expect(createProject(config)).rejects.toThrow();
         });
+
+        it("should create project without helper routes when disabled", async () => {
+            const config = {
+                projectName: "test-no-helper-routes",
+                language: "JavaScript",
+                packageManager: "npm",
+                concurrently: true,
+                initializeParts: "both",
+                installDependencies: false,
+                gitRepo: false,
+                includeHelperRoutes: false,
+            };
+
+            await createProject(config);
+
+            const projectPath = path.join(testDir, config.projectName);
+            const serverPath = path.join(projectPath, "server");
+
+            // Check that helper route files are not present
+            const authMiddlewarePath = path.join(
+                serverPath,
+                "src",
+                "middleware",
+                "authMiddleware.js",
+            );
+            const userModelPath = path.join(
+                serverPath,
+                "src",
+                "models",
+                "user.js",
+            );
+            const usersRoutePath = path.join(
+                serverPath,
+                "src",
+                "routes",
+                "users.js",
+            );
+            const generateTokenPath = path.join(
+                serverPath,
+                "src",
+                "utils",
+                "generateToken.js",
+            );
+
+            expect(await fs.pathExists(authMiddlewarePath)).toBe(false);
+            expect(await fs.pathExists(userModelPath)).toBe(false);
+            expect(await fs.pathExists(usersRoutePath)).toBe(false);
+            expect(await fs.pathExists(generateTokenPath)).toBe(false);
+
+            // Check that index route doesn't have users import/route
+            const indexRoutePath = path.join(
+                serverPath,
+                "src",
+                "routes",
+                "index.js",
+            );
+            const indexContent = await fs.readFile(indexRoutePath, "utf8");
+
+            expect(indexContent).not.toContain(
+                'import users from "./users.js"',
+            );
+            expect(indexContent).not.toContain('router.use("/users", users)');
+
+            // Verify other files still exist
+            const errorMiddlewarePath = path.join(
+                serverPath,
+                "src",
+                "middleware",
+                "errorMiddleware.js",
+            );
+            const querySanitizerPath = path.join(
+                serverPath,
+                "src",
+                "middleware",
+                "querySanitizer.js",
+            );
+
+            expect(await fs.pathExists(errorMiddlewarePath)).toBe(true);
+            expect(await fs.pathExists(querySanitizerPath)).toBe(true);
+        });
+
+        it("should create project with helper routes when enabled", async () => {
+            const config = {
+                projectName: "test-with-helper-routes",
+                language: "JavaScript",
+                packageManager: "npm",
+                concurrently: true,
+                initializeParts: "both",
+                installDependencies: false,
+                gitRepo: false,
+                includeHelperRoutes: true,
+            };
+
+            await createProject(config);
+
+            const projectPath = path.join(testDir, config.projectName);
+            const serverPath = path.join(projectPath, "server");
+
+            // Check that helper route files are present
+            const authMiddlewarePath = path.join(
+                serverPath,
+                "src",
+                "middleware",
+                "authMiddleware.js",
+            );
+            const userModelPath = path.join(
+                serverPath,
+                "src",
+                "models",
+                "user.js",
+            );
+            const usersRoutePath = path.join(
+                serverPath,
+                "src",
+                "routes",
+                "users.js",
+            );
+            const generateTokenPath = path.join(
+                serverPath,
+                "src",
+                "utils",
+                "generateToken.js",
+            );
+
+            expect(await fs.pathExists(authMiddlewarePath)).toBe(true);
+            expect(await fs.pathExists(userModelPath)).toBe(true);
+            expect(await fs.pathExists(usersRoutePath)).toBe(true);
+            expect(await fs.pathExists(generateTokenPath)).toBe(true);
+
+            // Check that index route has users import/route
+            const indexRoutePath = path.join(
+                serverPath,
+                "src",
+                "routes",
+                "index.js",
+            );
+            const indexContent = await fs.readFile(indexRoutePath, "utf8");
+
+            expect(indexContent).toContain('import users from "./users.js"');
+            expect(indexContent).toContain('router.use("/users", users)');
+        });
     });
 
     describe("Questions Configuration", () => {
@@ -697,6 +838,39 @@ describe("CMA CLI Comprehensive Tests", () => {
             );
             expect(gitRepoQuestion).toBeDefined();
             expect(typeof gitRepoQuestion.validate).toBe("function");
+        });
+
+        it("should have helper routes question with conditional logic", () => {
+            const helperRoutesQuestion = questions.find(
+                (q) => q.name === "includeHelperRoutes",
+            );
+            expect(helperRoutesQuestion).toBeDefined();
+            expect(helperRoutesQuestion.type).toBe("confirm");
+            expect(helperRoutesQuestion.default).toBe(true);
+            expect(typeof helperRoutesQuestion.when).toBe("function");
+
+            // Test the conditional logic
+            expect(helperRoutesQuestion.when({ concurrently: true })).toBe(
+                true,
+            );
+            expect(
+                helperRoutesQuestion.when({
+                    concurrently: false,
+                    initializeParts: "both",
+                }),
+            ).toBe(true);
+            expect(
+                helperRoutesQuestion.when({
+                    concurrently: false,
+                    initializeParts: "server",
+                }),
+            ).toBe(true);
+            expect(
+                helperRoutesQuestion.when({
+                    concurrently: false,
+                    initializeParts: "client",
+                }),
+            ).toBe(false);
         });
     });
 });

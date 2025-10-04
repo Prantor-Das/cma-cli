@@ -44,7 +44,7 @@ export const questions = [
     {
         type: "list",
         name: "packageManager",
-        message: "Choose your preferred package manager:",
+        message: "Select your preferred package manager from the installed options:",
         choices: async () => {
             const available = await detectAvailablePackageManagers();
 
@@ -91,6 +91,22 @@ export const questions = [
         ],
         default: "both",
         when: (answers) => !answers.concurrently,
+    },
+    {
+        type: "confirm",
+        name: "includeHelperRoutes",
+        message: "Include helper routes (user authentication, JWT middleware)?",
+        default: true,
+        when: (answers) => {
+            // Ask this question if:
+            // 1. Concurrently is true (includes both client and server)
+            // 2. OR initializeParts includes server (both or server only)
+            return (
+                answers.concurrently ||
+                answers.initializeParts === "both" ||
+                answers.initializeParts === "server"
+            );
+        },
     },
     {
         type: "confirm",

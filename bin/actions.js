@@ -34,9 +34,552 @@ import { PROJECT_TYPES, INIT_PARTS, LANGUAGES } from "./lib/constants.js";
 
 async function updatePackageJson(packageJsonPath, projectName, type) {
     const packageJson = await readPackageJson(packageJsonPath);
+
+    // Validate and convert project name to lowercase
+    const validatedProjectName = validateAndNormalizeProjectName(projectName);
+
     packageJson.name =
-        type === PROJECT_TYPES.ROOT ? projectName : `${projectName}-${type}`;
+        type === PROJECT_TYPES.ROOT
+            ? validatedProjectName
+            : `${validatedProjectName}-${type}`;
     await writePackageJson(packageJsonPath, packageJson);
+}
+
+function validateAndNormalizeProjectName(projectName) {
+    if (!projectName || typeof projectName !== "string") {
+        throw new Error("Project name must be a non-empty string");
+    }
+
+    // Convert to lowercase and replace invalid characters with hyphens
+    let normalized = projectName.toLowerCase().replace(/[^a-z0-9-_]/g, "-");
+
+    // Remove leading numbers or special characters
+    normalized = normalized.replace(/^[^a-z]+/, "");
+
+    // Remove trailing hyphens and underscores
+    normalized = normalized.replace(/[-_]+$/, "");
+
+    // Replace multiple consecutive hyphens/underscores with single hyphen
+    normalized = normalized.replace(/[-_]+/g, "-");
+
+    if (!normalized || normalized.length === 0) {
+        throw new Error(
+            "Project name must contain at least one letter after normalization",
+        );
+    }
+
+    // Ensure it's not too long (npm package name limit is 214 characters)
+    if (normalized.length > 200) {
+        normalized = normalized.substring(0, 200).replace(/-+$/, "");
+    }
+
+    return normalized;
+}
+
+async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
+    console.log(createProgressMessage("Removing helper routes..."));
+
+    const serverPaths = [];
+
+    // Determine server paths to process
+    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+        serverPaths.push(path.join(projectPath, "server"));
+    } else if (initializeParts === INIT_PARTS.SERVER) {
+        serverPaths.push(path.join(projectPath, "server"));
+    }
+
+    for (const serverPath of serverPaths) {
+        const filesToRemove = [
+            path.join(serverPath, "src", "middleware", "authMiddleware.js"),
+            path.join(serverPath, "src", "middleware", "authMiddleware.ts"),
+            path.join(serverPath, "src", "models", "user.js"),
+            path.join(serverPath, "src", "models", "user.ts"),
+            path.join(serverPath, "src", "routes", "users.js"),
+            path.join(serverPath, "src", "routes", "users.ts"),
+            path.join(serverPath, "src", "utils", "generateToken.js"),
+            path.join(serverPath, "src", "utils", "generateToken.ts"),
+        ];
+
+        for (const filePath of filesToRemove) {
+            if (await fs.pathExists(filePath)) {
+                await fs.remove(filePath);
+                console.log(
+                    chalk.gray(
+                        `   ✓ Removed ${path.relative(projectPath, filePath)}`,
+                    ),
+                );
+            }
+        }
+
+        // Update the index route file to remove users import and route
+        const indexRouteJs = path.join(serverPath, "src", "routes", "index.js");
+        const indexRouteTs = path.join(serverPath, "src", "routes", "index.ts");
+
+        if (await fs.pathExists(indexRouteJs)) {
+            await updateIndexRoute(indexRouteJs);
+            console.log(
+                chalk.gray(
+                    `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
+                ),
+            );
+        }
+
+        if (await fs.pathExists(indexRouteTs)) {
+            await updateIndexRoute(indexRouteTs);
+            console.log(
+                chalk.gray(
+                    `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
+                ),
+            );
+        }
+    }
+
+    // Update Demo files in client to remove helper route references
+    const clientPaths = [];
+
+    // Determine client paths to process
+    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+        clientPaths.push(path.join(projectPath, "client"));
+    } else if (initializeParts === INIT_PARTS.CLIENT) {
+        clientPaths.push(path.join(projectPath, "client"));
+    }
+
+    for (const clientPath of clientPaths) {
+        const demoJsxPath = path.join(clientPath, "src", "pages", "Demo.jsx");
+        const demoTsxPath = path.join(clientPath, "src", "pages", "Demo.tsx");
+
+        if (await fs.pathExists(demoJsxPath)) {
+            await updateDemoFile(demoJsxPath);
+            console.log(
+                chalk.gray(
+                    `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
+                ),
+            );
+        }
+
+        if (await fs.pathExists(demoTsxPath)) {
+            await updateDemoFile(demoTsxPath);
+            console.log(
+                chalk.gray(
+                    `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
+                ),
+            );
+        }
+    }
+}
+
+async function updateIndexRoute(indexRoutePath) {
+    try {
+        const content = await fs.readFile(indexRoutePath, "utf8");
+
+        // Remove the users import line
+        let updatedContent = content.replace(
+            /import users from ["']\.\/users\.js["'];\s*\n?/g,
+            "",
+        );
+
+        // Remove the users route line
+        updatedContent = updatedContent.replace(
+            /router\.use\(["']\/users["'], users\);\s*\n?/g,
+            "",
+        );
+
+        // Clean up any extra empty lines
+        updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+
+        await fs.writeFile(indexRoutePath, updatedContent, "utf8");
+    } catch (error) {
+        console.log(
+            chalk.yellow(
+                `⚠️  Could not update ${indexRoutePath}: ${error.message}`,
+            ),
+        );
+    }
+}
+
+async function updateDemoFile(demoFilePath) {
+    try {
+        const content = await fs.readFile(demoFilePath, "utf8");
+
+        // Define the items to remove (with flexible whitespace and line breaks)
+        const itemsToRemove = [
+            // Database Models item
+            /\{\s*title:\s*["']Database Models["'],\s*code:\s*["']server\/src\/models\/["'],\s*description:\s*["']Create or modify models for your data structure \(remove User model if not needed\)["'],?\s*\},?\s*/gs,
+            // Remove Demo Api Routes item
+            /\{\s*title:\s*["']Remove Demo Api Routes["'],\s*code:\s*["']server\/src\/routes\/users\.js["'],\s*description:\s*["']Delete or modify sample auth and user routes\. Create routes specific to your app["'],?\s*\},?\s*/gs,
+            // Update Route Index item
+            /\{\s*title:\s*["']Update Route Index["'],\s*code:\s*["']server\/src\/routes\/index\.js["'],\s*description:\s*["']Register your new routes and remove unused demo route imports["'],?\s*\},?\s*/gs,
+        ];
+
+        let updatedContent = content;
+
+        // Remove each item
+        itemsToRemove.forEach((pattern) => {
+            updatedContent = updatedContent.replace(pattern, "");
+        });
+
+        // Clean up any trailing commas and extra whitespace in the items array
+        updatedContent = updatedContent.replace(/,(\s*)\]/g, "$1]");
+        updatedContent = updatedContent.replace(/\[\s*,/g, "[");
+
+        // Clean up any extra empty lines
+        updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+
+        await fs.writeFile(demoFilePath, updatedContent, "utf8");
+    } catch (error) {
+        console.log(
+            chalk.yellow(
+                `⚠️  Could not update ${demoFilePath}: ${error.message}`,
+            ),
+        );
+    }
+}
+
+async function processTemplateFiles(
+    projectPath,
+    projectName,
+    concurrently,
+    initializeParts,
+    includeHelperRoutes = true,
+) {
+    console.log(createProgressMessage("Customizing template files..."));
+    console.log(chalk.blue(`   Project: ${projectName}`));
+    console.log(chalk.blue(`   Concurrent: ${concurrently}`));
+    console.log(chalk.blue(`   InitializeParts: ${initializeParts}`));
+
+    // Process files based on setup type
+    if (concurrently) {
+        // For concurrent setup, process both client and server from root
+        await processClientFiles(projectPath, projectName, "client");
+        await processServerFiles(
+            projectPath,
+            projectName,
+            "server",
+            includeHelperRoutes,
+        );
+        await processRootFiles(projectPath, projectName);
+    } else {
+        // For non-concurrent setup, process only the requested parts
+        if (
+            initializeParts === INIT_PARTS.BOTH ||
+            initializeParts === INIT_PARTS.CLIENT
+        ) {
+            await processClientFiles(projectPath, projectName, "client");
+        }
+        if (
+            initializeParts === INIT_PARTS.BOTH ||
+            initializeParts === INIT_PARTS.SERVER
+        ) {
+            await processServerFiles(
+                projectPath,
+                projectName,
+                "server",
+                includeHelperRoutes,
+            );
+        }
+    }
+}
+
+async function processClientFiles(projectPath, projectName, clientDir) {
+    const clientPath = path.join(projectPath, clientDir);
+
+    // Rename gitignore to .gitignore
+    const gitignorePath = path.join(clientPath, "gitignore");
+    const dotGitignorePath = path.join(clientPath, ".gitignore");
+
+    if (await fs.pathExists(gitignorePath)) {
+        await fs.move(gitignorePath, dotGitignorePath);
+        console.log(
+            chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${clientDir}`),
+        );
+    }
+
+    // Update index.html title
+    const indexHtmlPath = path.join(clientPath, "index.html");
+    if (await fs.pathExists(indexHtmlPath)) {
+        await updateIndexHtmlTitle(indexHtmlPath, projectName);
+        console.log(
+            chalk.gray(`   ✓ Updated title in ${clientDir}/index.html`),
+        );
+    }
+
+    // Update Navigation component (both JSX and TSX)
+    const jsNavPath = path.join(
+        clientPath,
+        "src",
+        "components",
+        "Navigation.jsx",
+    );
+    const tsNavPath = path.join(
+        clientPath,
+        "src",
+        "components",
+        "Navigation.tsx",
+    );
+
+    if (await fs.pathExists(jsNavPath)) {
+        await updateNavigationComponent(jsNavPath, projectName);
+        console.log(
+            chalk.gray(
+                `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.jsx`,
+            ),
+        );
+    }
+    if (await fs.pathExists(tsNavPath)) {
+        await updateNavigationComponent(tsNavPath, projectName);
+        console.log(
+            chalk.gray(
+                `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.tsx`,
+            ),
+        );
+    }
+
+    // Update .env.example
+    const envExamplePath = path.join(clientPath, ".env.example");
+    if (await fs.pathExists(envExamplePath)) {
+        await updateEnvExample(envExamplePath, projectName);
+        console.log(
+            chalk.gray(`   ✓ Updated app name in ${clientDir}/.env.example`),
+        );
+    }
+
+    // Delete .gitkeep files
+    const deletedCount = await deleteGitkeepFiles(clientPath);
+    if (deletedCount > 0) {
+        console.log(
+            chalk.gray(
+                `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${clientDir}`,
+            ),
+        );
+    }
+}
+
+async function processServerFiles(
+    projectPath,
+    projectName,
+    serverDir,
+    includeHelperRoutes = true,
+) {
+    const serverPath = path.join(projectPath, serverDir);
+
+    // Rename gitignore to .gitignore
+    const gitignorePath = path.join(serverPath, "gitignore");
+    const dotGitignorePath = path.join(serverPath, ".gitignore");
+
+    if (await fs.pathExists(gitignorePath)) {
+        await fs.move(gitignorePath, dotGitignorePath);
+        console.log(
+            chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${serverDir}`),
+        );
+    }
+
+    // Update .env.example if it exists in server
+    const envExamplePath = path.join(serverPath, ".env.example");
+    if (await fs.pathExists(envExamplePath)) {
+        await updateEnvExample(envExamplePath, projectName);
+        console.log(
+            chalk.gray(`   ✓ Updated app name in ${serverDir}/.env.example`),
+        );
+    }
+
+    // Delete .gitkeep files
+    const deletedCount = await deleteGitkeepFiles(serverPath);
+    if (deletedCount > 0) {
+        console.log(
+            chalk.gray(
+                `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${serverDir}`,
+            ),
+        );
+    }
+}
+
+async function processRootFiles(projectPath, projectName) {
+    // Rename gitignore to .gitignore at root level
+    const gitignorePath = path.join(projectPath, "gitignore");
+    const dotGitignorePath = path.join(projectPath, ".gitignore");
+
+    if (await fs.pathExists(gitignorePath)) {
+        await fs.move(gitignorePath, dotGitignorePath);
+        console.log(chalk.gray(`   ✓ Renamed gitignore to .gitignore in root`));
+    }
+
+    // Delete .gitkeep files at root
+    const deletedCount = await deleteGitkeepFiles(projectPath);
+    if (deletedCount > 0) {
+        console.log(
+            chalk.gray(
+                `   ✓ Removed ${deletedCount} .gitkeep file(s) from root`,
+            ),
+        );
+    }
+}
+
+async function updateIndexHtmlTitle(indexHtmlPath, projectName) {
+    try {
+        const content = await fs.readFile(indexHtmlPath, "utf8");
+        let updatedContent = content;
+
+        // Replace title tag content
+        updatedContent = updatedContent.replace(
+            /<title>cma-cli<\/title>/g,
+            `<title>${projectName}</title>`,
+        );
+
+        // Also handle cases where there might be spaces or different formatting
+        updatedContent = updatedContent.replace(
+            /<title>\s*cma-cli\s*<\/title>/g,
+            `<title>${projectName}</title>`,
+        );
+
+        if (content !== updatedContent) {
+            await fs.writeFile(indexHtmlPath, updatedContent, "utf8");
+            console.log(
+                chalk.gray(
+                    `     → Replaced title "cma-cli" with "${projectName}"`,
+                ),
+            );
+        } else {
+            console.log(
+                chalk.gray(
+                    `     → No title replacement needed in ${indexHtmlPath}`,
+                ),
+            );
+        }
+    } catch (error) {
+        console.log(
+            chalk.yellow(
+                `⚠️  Could not update ${indexHtmlPath}: ${error.message}`,
+            ),
+        );
+    }
+}
+
+async function updateNavigationComponent(navPath, projectName) {
+    try {
+        const content = await fs.readFile(navPath, "utf8");
+        let updatedContent = content;
+
+        // Replace all instances of cma-cli with the project name
+        // This handles both JSX and TSX files
+        updatedContent = updatedContent.replace(/cma-cli/g, projectName);
+
+        if (content !== updatedContent) {
+            await fs.writeFile(navPath, updatedContent, "utf8");
+            console.log(
+                chalk.gray(
+                    `     → Replaced "cma-cli" with "${projectName}" in navigation`,
+                ),
+            );
+        } else {
+            console.log(
+                chalk.gray(
+                    `     → No navigation replacement needed in ${navPath}`,
+                ),
+            );
+        }
+    } catch (error) {
+        console.log(
+            chalk.yellow(`⚠️  Could not update ${navPath}: ${error.message}`),
+        );
+    }
+}
+
+async function updateEnvExample(envPath, projectName) {
+    try {
+        const content = await fs.readFile(envPath, "utf8");
+        let updatedContent = content;
+
+        // Replace VITE_APP_NAME=cma-cli with the project name
+        updatedContent = updatedContent.replace(
+            /VITE_APP_NAME=cma-cli/g,
+            `VITE_APP_NAME=${projectName}`,
+        );
+
+        // Also replace any other app name patterns that might exist
+        updatedContent = updatedContent.replace(
+            /APP_NAME=cma-cli/g,
+            `APP_NAME=${projectName}`,
+        );
+
+        if (content !== updatedContent) {
+            await fs.writeFile(envPath, updatedContent, "utf8");
+            console.log(
+                chalk.gray(`     → Updated app name to "${projectName}"`),
+            );
+        } else {
+            console.log(
+                chalk.gray(`     → No env update needed in ${envPath}`),
+            );
+        }
+    } catch (error) {
+        console.log(
+            chalk.yellow(`⚠️  Could not update ${envPath}: ${error.message}`),
+        );
+    }
+}
+
+async function deleteGitkeepFiles(basePath) {
+    try {
+        // Common directories that might contain .gitkeep files
+        const possiblePaths = [
+            path.join(basePath, "public", ".gitkeep"),
+            path.join(basePath, "src", "assets", ".gitkeep"),
+            path.join(basePath, "src", "context", ".gitkeep"),
+            path.join(basePath, "src", "utils", ".gitkeep"),
+            path.join(basePath, "src", "controllers", ".gitkeep"),
+        ];
+
+        let deletedCount = 0;
+
+        for (const gitkeepPath of possiblePaths) {
+            if (await fs.pathExists(gitkeepPath)) {
+                await fs.remove(gitkeepPath);
+                deletedCount++;
+            }
+        }
+
+        // Also recursively search for any other .gitkeep files
+        const additionalGitkeepFiles = await findGitkeepFiles(basePath);
+        for (const gitkeepFile of additionalGitkeepFiles) {
+            if (!possiblePaths.includes(gitkeepFile)) {
+                await fs.remove(gitkeepFile);
+                deletedCount++;
+            }
+        }
+
+        return deletedCount;
+    } catch (error) {
+        console.log(
+            chalk.yellow(
+                `⚠️  Could not delete .gitkeep files in ${basePath}: ${error.message}`,
+            ),
+        );
+        return 0;
+    }
+}
+
+async function findGitkeepFiles(basePath) {
+    const gitkeepFiles = [];
+
+    try {
+        const items = await fs.readdir(basePath, { withFileTypes: true });
+
+        for (const item of items) {
+            const fullPath = path.join(basePath, item.name);
+
+            if (item.isDirectory()) {
+                // Recursively search subdirectories
+                const subGitkeepFiles = await findGitkeepFiles(fullPath);
+                gitkeepFiles.push(...subGitkeepFiles);
+            } else if (item.name === ".gitkeep") {
+                gitkeepFiles.push(fullPath);
+            }
+        }
+    } catch (error) {
+        // Ignore errors for directories that don't exist or can't be read
+    }
+
+    return gitkeepFiles;
 }
 
 async function processPackageJson(
@@ -90,6 +633,8 @@ async function copyTemplateFiles(
     projectPath,
     concurrently,
     initializeParts = INIT_PARTS.BOTH,
+    projectName,
+    includeHelperRoutes = true,
 ) {
     if (concurrently || initializeParts === INIT_PARTS.BOTH) {
         await fs.copy(templateDir, projectPath);
@@ -109,6 +654,20 @@ async function copyTemplateFiles(
             );
         }
     }
+
+    // Remove helper routes if not requested
+    if (!includeHelperRoutes) {
+        await removeHelperRoutes(projectPath, concurrently, initializeParts);
+    }
+
+    // Rename gitignore to .gitignore and update project name in files
+    await processTemplateFiles(
+        projectPath,
+        projectName,
+        concurrently,
+        initializeParts,
+        includeHelperRoutes,
+    );
 }
 
 async function createPnpmWorkspaceFile(projectPath, initializeParts = "both") {
@@ -219,6 +778,8 @@ export async function createProject(config) {
             projectPath,
             config.concurrently,
             config.initializeParts,
+            config.projectName,
+            config.includeHelperRoutes,
         );
         await processPackageJson(
             projectPath,
