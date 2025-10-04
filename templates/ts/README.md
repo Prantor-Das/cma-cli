@@ -4,7 +4,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 
 ## 🚀 Features
 
--   **Modern Stack**: React 18, Node.js, Express, MongoDB with TypeScript
+-   **Modern Stack**: React, Node.js, Express, MongoDB with TypeScript
 -   **Type Safety**: Full TypeScript support with strict type checking
 -   **Development Tools**: Hot reload, ESLint with TypeScript, Vite
 -   **UI Components**: Tailwind CSS with typed custom components
@@ -24,8 +24,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   ├── src/
 │   │   ├── assets/         # Static assets (.gitkeep)
 │   │   ├── components/     # Reusable UI components
-│   │   │   ├── ui/         # UI components (DocumentationCard, Person, ThemeToggle)
-│   │   │   ├── ApiMessage.tsx
+│   │   │   ├── ui/         # UI components (ThemeToggle)
 │   │   │   └── Navigation.tsx
 │   │   ├── config/         # Configuration files
 │   │   │   └── constants.ts
@@ -33,7 +32,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   │   ├── hooks/          # Custom React hooks
 │   │   │   └── useTheme.ts
 │   │   ├── pages/          # Page components
-│   │   │   ├── Home.tsx    # Landing page with demo content
+│   │   │   ├── Demo.tsx    # Landing page with demo content
 │   │   │   └── NotFound.tsx # 404 page
 │   │   ├── utils/          # Utility functions (.gitkeep)
 │   │   ├── App.tsx         # Main app with routing
@@ -43,7 +42,6 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   │   └── vite-env.d.ts   # Vite environment types
 │   ├── index.html          # HTML template
 │   ├── vite.config.ts      # Vite configuration (TypeScript)
-│   ├── tailwind.config.js  # Tailwind configuration
 │   ├── tsconfig.json       # TypeScript configuration
 │   ├── tsconfig.node.json  # TypeScript configuration for Node.js
 │   └── package.json
@@ -206,11 +204,8 @@ VITE_API_URL=http://localhost:8000
 
 1. **Client Side**:
 
-    - Update `client/src/pages/Home.tsx` with your content
-    - Remove `client/src/components/ApiMessage.tsx`
-    - Update navigation in `client/src/components/Navigation.tsx`
-    - Customize UI components in `client/src/components/ui/` (DocumentationCard, Person, ThemeToggle)
-    - Remove `.gitkeep` files from empty directories (assets, context, utils)
+    - Remove `client/src/pages/Demo.tsx` and it's route from `client/src/App.tsx`
+    - Customize UI components in `client/src/components/ui/` (ThemeToggle)
     - Update type definitions in `client/src/vite-env.d.ts` as needed
 
 2. **Server Side**:

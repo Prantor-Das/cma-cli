@@ -13,7 +13,7 @@ A simple and powerful CLI tool to scaffold a modern MERN stack application with 
 
 - **Interactive CLI:** An easy-to-use command-line interface to get you started in seconds.
 - **JavaScript & TypeScript:** Choose between a JavaScript or a TypeScript template.
-- **Modern Stack:** React 18, Node.js, Express, and MongoDB.
+- **Modern Stack:** React, Node.js, Express, and MongoDB.
 - **Vite Powered:** A fast and modern build tool for the frontend.
 - **Tailwind CSS:** A utility-first CSS framework for rapid UI development.
 - **Dark Mode:** The templates come with a pre-configured dark mode.

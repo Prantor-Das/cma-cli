@@ -12,22 +12,22 @@ const Header = () => {
                 <div className="mr-4 flex">
                     <Link
                         href="/"
-                        className="md:mr-16 flex items-center space-x-2"
+                        className="sm:mr-10 md:mr-16 flex items-center space-x-2"
                     >
-                        <span className="font-semibold font-mono text-lg">
+                        <span className="font-semibold font-mono sm:text-lg">
                             cma-cli
                         </span>
                     </Link>
-                    <nav className="items-center space-x-6 font-medium hidden md:flex">
+                    <nav className="flex items-center space-x-4 md:space-x-6 font-medium ">
                         <Link
                             href="/"
-                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200"
+                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200 hidden sm:block"
                         >
                             Home
                         </Link>
                         <Link
                             href="/docs"
-                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200"
+                            className="text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50 transition-all duration-200 ml-4 md:ml-0"
                         >
                             Docs
                         </Link>
@@ -39,7 +39,7 @@ const Header = () => {
                             href={GITHUB_REPO_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
+                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-2 sm:px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
                         >
                             <Github size={18} />
                             <span className="hidden sm:block">GitHub</span>
@@ -48,7 +48,7 @@ const Header = () => {
                             href={NPM_PACKAGE_LINK}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-4 py-2 rounded-xl items-center gap-1 text-sm dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
+                            className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-2 sm:px-4 py-2 rounded-xl items-center gap-1 text-sm dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
                         >
                             <Package
                                 size={18}

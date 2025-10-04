@@ -94,7 +94,7 @@ const Features = () => (
                         }
                     >
                         <Icon className="w-8 h-8 mb-3 text-green-600 dark:text-green-400 lg:mx-4 lg:mt-4" />
-                        <p className="text-lg font-semibold mb-2 px-4">
+                        <p className="text-lg font-semibold mb-2 lg:px-4">
                             {title}
                         </p>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 lg:px-4 lg:pb-4">

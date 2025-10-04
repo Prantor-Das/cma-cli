@@ -55,10 +55,6 @@ export default function TypescriptPage() {
                                     <b>`vite.config.ts`</b>: Vite configuration
                                     file.
                                 </li>
-                                <li>
-                                    <b>`tailwind.config.js`</b>: Tailwind CSS
-                                    configuration.
-                                </li>
                             </ul>
                         </div>
                         <div>
@@ -143,8 +139,8 @@ export default function TypescriptPage() {
                                     to the DOM and server renderers for React.
                                 </li>
                                 <li>
-                                    <b>react-router-dom</b>: For handling
-                                    routing in the React application.
+                                    <b>react-router</b>: For handling routing in
+                                    the React application.
                                 </li>
                                 <li>
                                     <b>tailwindcss</b>: A utility-first CSS
