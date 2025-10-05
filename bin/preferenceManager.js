@@ -130,7 +130,7 @@ export async function setUserPreference(managerName) {
     
     const saved = await saveUserPreferences(preferences);
     if (saved) {
-      console.log(createSuccessMessage(`Set preferred package manager to ${managerName}`));
+      // console.log(createSuccessMessage(`Set preferred package manager to ${managerName}`));
       return true;
     }
     

@@ -633,11 +633,11 @@ export async function installDependencies(
     concurrently,
     initializeParts = "both",
 ) {
-    console.log(
-        chalk.blue(
-            `📦 Using ${packageManager.name} ${packageManager.speed} for installation...`,
-        ),
-    );
+    // console.log(
+    //     chalk.blue(
+    //         `📦 Using ${packageManager.name} ${packageManager.speed} for installation...`,
+    //     ),
+    // );
 
     const metrics = new InstallationMetrics(packageManager.name);
     metrics.startPhase("preparation");
@@ -710,25 +710,25 @@ export async function installDependencies(
 
         // Show installation summary
         const report = metrics.getReport();
-        console.log(
-            chalk.green(
-                `📊 Installation completed in ${report.totalDuration.toFixed(
-                    1,
-                )}s using ${packageManager.name}`,
-            ),
-        );
+        // console.log(
+        //     chalk.green(
+        //         `📊 Installation completed in ${report.totalDuration.toFixed(
+        //             1,
+        //         )}s using ${packageManager.name}`,
+        //     ),
+        // );
 
         // Show detailed breakdown if multiple phases
-        if (report.phases.length > 1) {
-            console.log(chalk.gray(`   Breakdown:`));
-            report.phases.forEach((phase) => {
-                console.log(
-                    chalk.gray(
-                        `   • ${phase.name}: ${phase.duration.toFixed(1)}s`,
-                    ),
-                );
-            });
-        }
+        // if (report.phases.length > 1) {
+        //     console.log(chalk.gray(`   Breakdown:`));
+        //     report.phases.forEach((phase) => {
+        //         console.log(
+        //             chalk.gray(
+        //                 `   • ${phase.name}: ${phase.duration.toFixed(1)}s`,
+        //             ),
+        //         );
+        //     });
+        // }
 
         // Show performance metrics if available
         if (report.packagesInstalled > 0) {
@@ -936,7 +936,7 @@ export async function performPostInstallationVerification(
     packageManager,
     initializeParts = "both",
 ) {
-    console.log(chalk.blue(`🔍 Verifying installation...`));
+    // console.log(chalk.blue(`🔍 Verifying installation...`));
 
     const verificationResults = {
         success: true,
@@ -1052,34 +1052,34 @@ export async function performPostInstallationVerification(
         if (verificationResults.success) {
             console.log(chalk.green(`✅ Installation verification passed`));
 
-            // Show summary
-            if (verificationResults.nodeModules.length > 0) {
-                console.log(chalk.gray(`📦 Installed packages:`));
-                verificationResults.nodeModules.forEach((info) => {
-                    console.log(chalk.gray(`   • ${info}`));
-                });
-            }
+        //     // Show summary
+        //     if (verificationResults.nodeModules.length > 0) {
+        //         console.log(chalk.gray(`📦 Installed packages:`));
+        //         verificationResults.nodeModules.forEach((info) => {
+        //             console.log(chalk.gray(`   • ${info}`));
+        //         });
+        //     }
 
-            if (verificationResults.lockFiles.length > 0) {
-                console.log(chalk.gray(`🔒 Lock files created:`));
-                verificationResults.lockFiles.forEach((lockFile) => {
-                    console.log(chalk.gray(`   • ${lockFile}`));
-                });
-            }
-        } else {
-            console.log(chalk.red(`❌ Installation verification failed`));
-            verificationResults.errors.forEach((error) => {
-                console.log(chalk.red(`   • ${error}`));
-            });
+        //     if (verificationResults.lockFiles.length > 0) {
+        //         console.log(chalk.gray(`🔒 Lock files created:`));
+        //         verificationResults.lockFiles.forEach((lockFile) => {
+        //             console.log(chalk.gray(`   • ${lockFile}`));
+        //         });
+        //     }
+        // } else {
+        //     console.log(chalk.red(`❌ Installation verification failed`));
+        //     verificationResults.errors.forEach((error) => {
+        //         console.log(chalk.red(`   • ${error}`));
+        //     });
         }
 
         // Show warnings if any
-        if (verificationResults.warnings.length > 0) {
-            console.log(chalk.yellow(`⚠️  Warnings:`));
-            verificationResults.warnings.forEach((warning) => {
-                console.log(chalk.yellow(`   • ${warning}`));
-            });
-        }
+        // if (verificationResults.warnings.length > 0) {
+        //     console.log(chalk.yellow(`⚠️  Warnings:`));
+        //     verificationResults.warnings.forEach((warning) => {
+        //         console.log(chalk.yellow(`   • ${warning}`));
+        //     });
+        // }
 
         return verificationResults;
     } catch (error) {

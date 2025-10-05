@@ -183,11 +183,11 @@ async function addConcurrentlyDependencies(packageJson, packageManager) {
     }
   }
 
-  if (addedDeps.length > 0) {
-    console.log(
-      chalk.blue(
-        `▸ Adding concurrently dependencies for ${packageManager.name} compatibility: ${addedDeps.join(', ')}`
-      )
-    );
-  }
+  // if (addedDeps.length > 0) {
+  //   console.log(
+  //     chalk.blue(
+  //       `▸ Adding concurrently dependencies for ${packageManager.name} compatibility: ${addedDeps.join(', ')}`
+  //     )
+  //   );
+  // }
 }

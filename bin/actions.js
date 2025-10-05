@@ -77,7 +77,7 @@ function validateAndNormalizeProjectName(projectName) {
 }
 
 async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
-    console.log(createProgressMessage("Removing helper routes..."));
+    // console.log(createProgressMessage("Removing helper routes..."));
 
     const serverPaths = [];
 
@@ -103,11 +103,11 @@ async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
         for (const filePath of filesToRemove) {
             if (await fs.pathExists(filePath)) {
                 await fs.remove(filePath);
-                console.log(
-                    chalk.gray(
-                        `   ✓ Removed ${path.relative(projectPath, filePath)}`,
-                    ),
-                );
+                // console.log(
+                //     chalk.gray(
+                //         `   ✓ Removed ${path.relative(projectPath, filePath)}`,
+                //     ),
+                // );
             }
         }
 
@@ -117,20 +117,20 @@ async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
 
         if (await fs.pathExists(indexRouteJs)) {
             await updateIndexRoute(indexRouteJs);
-            console.log(
-                chalk.gray(
-                    `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
+            //     ),
+            // );
         }
 
         if (await fs.pathExists(indexRouteTs)) {
             await updateIndexRoute(indexRouteTs);
-            console.log(
-                chalk.gray(
-                    `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
+            //     ),
+            // );
         }
     }
 
@@ -150,20 +150,20 @@ async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
 
         if (await fs.pathExists(demoJsxPath)) {
             await updateDemoFile(demoJsxPath);
-            console.log(
-                chalk.gray(
-                    `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
+            //     ),
+            // );
         }
 
         if (await fs.pathExists(demoTsxPath)) {
             await updateDemoFile(demoTsxPath);
-            console.log(
-                chalk.gray(
-                    `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
+            //     ),
+            // );
         }
     }
 }
@@ -242,10 +242,10 @@ async function processTemplateFiles(
     initializeParts,
     includeHelperRoutes = true,
 ) {
-    console.log(createProgressMessage("Customizing template files..."));
-    console.log(chalk.blue(`   Project: ${projectName}`));
-    console.log(chalk.blue(`   Concurrent: ${concurrently}`));
-    console.log(chalk.blue(`   InitializeParts: ${initializeParts}`));
+    console.log(chalk.blue("\n▸ Customizing template files..."));
+    console.log(chalk.grey(`   Project: ${projectName}`));
+    console.log(chalk.grey(`   Concurrent: ${concurrently}`));
+    console.log(chalk.grey(`   InitializeParts: ${initializeParts}`));
 
     // Process files based on setup type
     if (concurrently) {
@@ -289,18 +289,18 @@ async function processClientFiles(projectPath, projectName, clientDir) {
 
     if (await fs.pathExists(gitignorePath)) {
         await fs.move(gitignorePath, dotGitignorePath);
-        console.log(
-            chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${clientDir}`),
-        );
+        // console.log(
+        //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${clientDir}`),
+        // );
     }
 
     // Update index.html title
     const indexHtmlPath = path.join(clientPath, "index.html");
     if (await fs.pathExists(indexHtmlPath)) {
         await updateIndexHtmlTitle(indexHtmlPath, projectName);
-        console.log(
-            chalk.gray(`   ✓ Updated title in ${clientDir}/index.html`),
-        );
+        // console.log(
+        //     chalk.gray(`   ✓ Updated title in ${clientDir}/index.html`),
+        // );
     }
 
     // Update Navigation component (both JSX and TSX)
@@ -319,39 +319,39 @@ async function processClientFiles(projectPath, projectName, clientDir) {
 
     if (await fs.pathExists(jsNavPath)) {
         await updateNavigationComponent(jsNavPath, projectName);
-        console.log(
-            chalk.gray(
-                `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.jsx`,
-            ),
-        );
+        // console.log(
+        //     chalk.gray(
+        //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.jsx`,
+        //     ),
+        // );
     }
     if (await fs.pathExists(tsNavPath)) {
         await updateNavigationComponent(tsNavPath, projectName);
-        console.log(
-            chalk.gray(
-                `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.tsx`,
-            ),
-        );
+        // console.log(
+        //     chalk.gray(
+        //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.tsx`,
+        //     ),
+        // );
     }
 
     // Update .env.example
     const envExamplePath = path.join(clientPath, ".env.example");
     if (await fs.pathExists(envExamplePath)) {
         await updateEnvExample(envExamplePath, projectName);
-        console.log(
-            chalk.gray(`   ✓ Updated app name in ${clientDir}/.env.example`),
-        );
+        // console.log(
+        //     chalk.gray(`   ✓ Updated app name in ${clientDir}/.env.example`),
+        // );
     }
 
     // Delete .gitkeep files
     const deletedCount = await deleteGitkeepFiles(clientPath);
-    if (deletedCount > 0) {
-        console.log(
-            chalk.gray(
-                `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${clientDir}`,
-            ),
-        );
-    }
+    // if (deletedCount > 0) {
+    //     console.log(
+    //         chalk.gray(
+    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${clientDir}`,
+    //         ),
+    //     );
+    // }
 }
 
 async function processServerFiles(
@@ -368,29 +368,29 @@ async function processServerFiles(
 
     if (await fs.pathExists(gitignorePath)) {
         await fs.move(gitignorePath, dotGitignorePath);
-        console.log(
-            chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${serverDir}`),
-        );
+        // console.log(
+        //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${serverDir}`),
+        // );
     }
 
     // Update .env.example if it exists in server
     const envExamplePath = path.join(serverPath, ".env.example");
     if (await fs.pathExists(envExamplePath)) {
         await updateEnvExample(envExamplePath, projectName);
-        console.log(
-            chalk.gray(`   ✓ Updated app name in ${serverDir}/.env.example`),
-        );
+        // console.log(
+        //     chalk.gray(`   ✓ Updated app name in ${serverDir}/.env.example`),
+        // );
     }
 
     // Delete .gitkeep files
     const deletedCount = await deleteGitkeepFiles(serverPath);
-    if (deletedCount > 0) {
-        console.log(
-            chalk.gray(
-                `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${serverDir}`,
-            ),
-        );
-    }
+    // if (deletedCount > 0) {
+    //     console.log(
+    //         chalk.gray(
+    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${serverDir}`,
+    //         ),
+    //     );
+    // }
 }
 
 async function processRootFiles(projectPath, projectName) {
@@ -400,18 +400,18 @@ async function processRootFiles(projectPath, projectName) {
 
     if (await fs.pathExists(gitignorePath)) {
         await fs.move(gitignorePath, dotGitignorePath);
-        console.log(chalk.gray(`   ✓ Renamed gitignore to .gitignore in root`));
+        // console.log(chalk.gray(`   ✓ Renamed gitignore to .gitignore in root`));
     }
 
     // Delete .gitkeep files at root
     const deletedCount = await deleteGitkeepFiles(projectPath);
-    if (deletedCount > 0) {
-        console.log(
-            chalk.gray(
-                `   ✓ Removed ${deletedCount} .gitkeep file(s) from root`,
-            ),
-        );
-    }
+    // if (deletedCount > 0) {
+    //     console.log(
+    //         chalk.gray(
+    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from root`,
+    //         ),
+    //     );
+    // }
 }
 
 async function updateIndexHtmlTitle(indexHtmlPath, projectName) {
@@ -433,17 +433,17 @@ async function updateIndexHtmlTitle(indexHtmlPath, projectName) {
 
         if (content !== updatedContent) {
             await fs.writeFile(indexHtmlPath, updatedContent, "utf8");
-            console.log(
-                chalk.gray(
-                    `     → Replaced title "cma-cli" with "${projectName}"`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `     → Replaced title "cma-cli" with "${projectName}"`,
+            //     ),
+            // );
         } else {
-            console.log(
-                chalk.gray(
-                    `     → No title replacement needed in ${indexHtmlPath}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `     → No title replacement needed in ${indexHtmlPath}`,
+            //     ),
+            // );
         }
     } catch (error) {
         console.log(
@@ -465,17 +465,17 @@ async function updateNavigationComponent(navPath, projectName) {
 
         if (content !== updatedContent) {
             await fs.writeFile(navPath, updatedContent, "utf8");
-            console.log(
-                chalk.gray(
-                    `     → Replaced "cma-cli" with "${projectName}" in navigation`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `     → Replaced "cma-cli" with "${projectName}" in navigation`,
+            //     ),
+            // );
         } else {
-            console.log(
-                chalk.gray(
-                    `     → No navigation replacement needed in ${navPath}`,
-                ),
-            );
+            // console.log(
+            //     chalk.gray(
+            //         `     → No navigation replacement needed in ${navPath}`,
+            //     ),
+            // );
         }
     } catch (error) {
         console.log(
@@ -503,13 +503,13 @@ async function updateEnvExample(envPath, projectName) {
 
         if (content !== updatedContent) {
             await fs.writeFile(envPath, updatedContent, "utf8");
-            console.log(
-                chalk.gray(`     → Updated app name to "${projectName}"`),
-            );
+            // console.log(
+            //     chalk.gray(`     → Updated app name to "${projectName}"`),
+            // );
         } else {
-            console.log(
-                chalk.gray(`     → No env update needed in ${envPath}`),
-            );
+            // console.log(
+            //     chalk.gray(`     → No env update needed in ${envPath}`),
+            // );
         }
     } catch (error) {
         console.log(
@@ -704,9 +704,9 @@ export async function createProject(config) {
     );
     const projectPath = path.resolve(process.cwd(), config.projectName);
 
-    console.log(
-        createSuccessMessage(`Creating MERN app: ${config.projectName}`),
-    );
+    // console.log(
+    //     createSuccessMessage(`Creating MERN app: ${config.projectName}`),
+    // );
 
     let verificationResults = null;
 
@@ -771,7 +771,7 @@ export async function createProject(config) {
             }
         }
 
-        console.log(createProgressMessage("Setting up project structure..."));
+        // console.log(createProgressMessage("Setting up project structure..."));
         await createProjectFolder(projectPath);
         await copyTemplateFiles(
             templateDir,
@@ -851,20 +851,20 @@ export async function createProject(config) {
                 );
 
                 // Perform post-installation verification
-                console.log(chalk.blue("▸ Verifying installation..."));
+                // console.log(chalk.blue("▸ Verifying installation..."));
                 verificationResults = await performPostInstallationVerification(
                     projectPath,
                     packageManager,
                     config.initializeParts,
                 );
 
-                if (!verificationResults.success) {
-                    console.log(
-                        chalk.yellow(
-                            "⚠️  Installation verification found issues, but continuing...",
-                        ),
-                    );
-                }
+                // if (!verificationResults.success) {
+                //     console.log(
+                //         chalk.yellow(
+                //             "⚠️  Installation verification found issues, but continuing...",
+                //         ),
+                //     );
+                // }
             } catch (installError) {
                 console.log(
                     chalk.red(
@@ -957,43 +957,43 @@ export async function createProject(config) {
         displayFallbackSummary();
 
         // Generate and display installation report if dependencies were installed
-        if (config.installDependencies && verificationResults) {
-            console.log(chalk.cyan("\n📊 Installation Summary:"));
+        // if (config.installDependencies && verificationResults) {
+        //     console.log(chalk.cyan("\n📊 Installation Summary:"));
 
-            if (config.fallbackUsed) {
-                console.log(
-                    chalk.yellow(
-                        `   ⚠️  Fallback used: ${config.originalManager} → ${packageManager.name}`,
-                    ),
-                );
-            }
+        //     if (config.fallbackUsed) {
+        //         console.log(
+        //             chalk.yellow(
+        //                 `   ⚠️  Fallback used: ${config.originalManager} → ${packageManager.name}`,
+        //             ),
+        //         );
+        //     }
 
-            if (verificationResults.success) {
-                console.log(
-                    chalk.green(
-                        "   ✅ All dependencies installed and verified",
-                    ),
-                );
-            } else {
-                console.log(
-                    chalk.yellow("   ⚠️  Installation completed with warnings"),
-                );
-            }
+        //     if (verificationResults.success) {
+        //         console.log(
+        //             chalk.green(
+        //                 "   ✅ All dependencies installed and verified",
+        //             ),
+        //         );
+        //     } else {
+        //         console.log(
+        //             chalk.yellow("   ⚠️  Installation completed with warnings"),
+        //         );
+        //     }
 
-            // Show performance metrics if available
-            if (verificationResults.summary) {
-                const totalPackages = Object.values(
-                    verificationResults.summary,
-                ).reduce((sum, info) => sum + (info.packages || 0), 0);
-                if (totalPackages > 0) {
-                    console.log(
-                        chalk.gray(
-                            `   📦 Total packages installed: ${totalPackages}`,
-                        ),
-                    );
-                }
-            }
-        }
+        //     // Show performance metrics if available
+        //     if (verificationResults.summary) {
+        //         const totalPackages = Object.values(
+        //             verificationResults.summary,
+        //         ).reduce((sum, info) => sum + (info.packages || 0), 0);
+        //         if (totalPackages > 0) {
+        //             console.log(
+        //                 chalk.gray(
+        //                     `   📦 Total packages installed: ${totalPackages}`,
+        //                 ),
+        //             );
+        //         }
+        //     }
+        // }
 
         // Show installation failure message if needed
         if (config.installationFailed) {
