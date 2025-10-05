@@ -85,7 +85,8 @@ async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
     if (concurrently || initializeParts === INIT_PARTS.BOTH) {
         serverPaths.push(path.join(projectPath, "server"));
     } else if (initializeParts === INIT_PARTS.SERVER) {
-        serverPaths.push(path.join(projectPath, "server"));
+        // For server-only setup, server files are in project root
+        serverPaths.push(projectPath);
     }
 
     for (const serverPath of serverPaths) {
@@ -141,7 +142,8 @@ async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
     if (concurrently || initializeParts === INIT_PARTS.BOTH) {
         clientPaths.push(path.join(projectPath, "client"));
     } else if (initializeParts === INIT_PARTS.CLIENT) {
-        clientPaths.push(path.join(projectPath, "client"));
+        // For client-only setup, client files are in project root
+        clientPaths.push(projectPath);
     }
 
     for (const clientPath of clientPaths) {
@@ -258,25 +260,30 @@ async function processTemplateFiles(
             includeHelperRoutes,
         );
         await processRootFiles(projectPath, projectName);
+    } else if (initializeParts === INIT_PARTS.BOTH) {
+        // For both parts (non-concurrent), use traditional structure
+        await processClientFiles(projectPath, projectName, "client");
+        await processServerFiles(
+            projectPath,
+            projectName,
+            "server",
+            includeHelperRoutes,
+        );
+        await processRootFiles(projectPath, projectName);
     } else {
-        // For non-concurrent setup, process only the requested parts
-        if (
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.CLIENT
-        ) {
-            await processClientFiles(projectPath, projectName, "client");
-        }
-        if (
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.SERVER
-        ) {
+        // For client-only or server-only, files are in project root
+        if (initializeParts === INIT_PARTS.CLIENT) {
+            await processClientFiles(projectPath, projectName, ".");
+        } else if (initializeParts === INIT_PARTS.SERVER) {
             await processServerFiles(
                 projectPath,
                 projectName,
-                "server",
+                ".",
                 includeHelperRoutes,
             );
         }
+        // Process root files for single-part setups too
+        await processRootFiles(projectPath, projectName);
     }
 }
 
@@ -588,39 +595,57 @@ async function processPackageJson(
     concurrently,
     initializeParts = INIT_PARTS.BOTH,
 ) {
-    const clientPackage = path.join(projectPath, "client", "package.json");
-    const serverPackage = path.join(projectPath, "server", "package.json");
+    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+        // For concurrent or both parts, use the traditional structure
+        const clientPackage = path.join(projectPath, "client", "package.json");
+        const serverPackage = path.join(projectPath, "server", "package.json");
 
-    if (concurrently) {
-        await updatePackageJson(
-            path.join(projectPath, "package.json"),
-            projectName,
-            PROJECT_TYPES.ROOT,
-        );
-    }
+        if (concurrently) {
+            await updatePackageJson(
+                path.join(projectPath, "package.json"),
+                projectName,
+                PROJECT_TYPES.ROOT,
+            );
+        }
 
-    if (
-        concurrently ||
-        initializeParts === INIT_PARTS.BOTH ||
-        initializeParts === INIT_PARTS.CLIENT
-    ) {
-        await updatePackageJson(
-            clientPackage,
-            projectName,
-            PROJECT_TYPES.CLIENT,
-        );
-    }
+        if (
+            concurrently ||
+            initializeParts === INIT_PARTS.BOTH ||
+            initializeParts === INIT_PARTS.CLIENT
+        ) {
+            await updatePackageJson(
+                clientPackage,
+                projectName,
+                PROJECT_TYPES.CLIENT,
+            );
+        }
 
-    if (
-        concurrently ||
-        initializeParts === INIT_PARTS.BOTH ||
-        initializeParts === INIT_PARTS.SERVER
-    ) {
-        await updatePackageJson(
-            serverPackage,
-            projectName,
-            PROJECT_TYPES.SERVER,
-        );
+        if (
+            concurrently ||
+            initializeParts === INIT_PARTS.BOTH ||
+            initializeParts === INIT_PARTS.SERVER
+        ) {
+            await updatePackageJson(
+                serverPackage,
+                projectName,
+                PROJECT_TYPES.SERVER,
+            );
+        }
+    } else {
+        // For client-only or server-only, package.json is in project root
+        if (initializeParts === INIT_PARTS.CLIENT) {
+            await updatePackageJson(
+                path.join(projectPath, "package.json"),
+                projectName,
+                PROJECT_TYPES.CLIENT,
+            );
+        } else if (initializeParts === INIT_PARTS.SERVER) {
+            await updatePackageJson(
+                path.join(projectPath, "package.json"),
+                projectName,
+                PROJECT_TYPES.SERVER,
+            );
+        }
     }
 }
 
@@ -643,15 +668,27 @@ async function copyTemplateFiles(
         }
     } else {
         if (initializeParts === INIT_PARTS.CLIENT) {
-            await fs.copy(
-                path.join(templateDir, "client"),
-                path.join(projectPath, "client"),
-            );
+            // Copy client files directly to project root (not in a client subfolder)
+            await fs.copy(path.join(templateDir, "client"), projectPath);
+            // Copy root gitignore to project root for client-only setup
+            const rootGitignorePath = path.join(templateDir, "gitignore");
+            if (await fs.pathExists(rootGitignorePath)) {
+                await fs.copy(
+                    rootGitignorePath,
+                    path.join(projectPath, "gitignore"),
+                );
+            }
         } else if (initializeParts === INIT_PARTS.SERVER) {
-            await fs.copy(
-                path.join(templateDir, "server"),
-                path.join(projectPath, "server"),
-            );
+            // Copy server files directly to project root (not in a server subfolder)
+            await fs.copy(path.join(templateDir, "server"), projectPath);
+            // Copy root gitignore to project root for server-only setup
+            const rootGitignorePath = path.join(templateDir, "gitignore");
+            if (await fs.pathExists(rootGitignorePath)) {
+                await fs.copy(
+                    rootGitignorePath,
+                    path.join(projectPath, "gitignore"),
+                );
+            }
         }
     }
 
@@ -694,6 +731,35 @@ async function createPnpmWorkspaceFile(projectPath, initializeParts = "both") {
     );
 }
 
+async function createClientPnpmWorkspaceFile(
+    projectPath,
+    concurrently,
+    initializeParts,
+) {
+    const clientPnpmWorkspaceContent = `ignoredBuiltDependencies:
+  - "@tailwindcss/oxide"
+`;
+
+    let clientPath;
+
+    // Determine the client path based on setup type
+    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+        clientPath = path.join(projectPath, "client");
+    } else if (initializeParts === INIT_PARTS.CLIENT) {
+        // For client-only setup, client files are in project root
+        clientPath = projectPath;
+    }
+
+    // Only create if we have a client path (client is being initialized)
+    if (clientPath && (await fs.pathExists(clientPath))) {
+        await fs.writeFile(
+            path.join(clientPath, "pnpm-workspace.yaml"),
+            clientPnpmWorkspaceContent,
+            "utf8",
+        );
+    }
+}
+
 export async function createProject(config) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -702,7 +768,24 @@ export async function createProject(config) {
         __dirname,
         `../templates/${config.language === "JavaScript" ? "js" : "ts"}`,
     );
-    const projectPath = path.resolve(process.cwd(), config.projectName);
+
+    // Determine project path based on initialization parts
+    let projectPath;
+    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+        projectPath = path.resolve(process.cwd(), config.projectName);
+    } else if (config.initializeParts === INIT_PARTS.CLIENT) {
+        projectPath = path.resolve(
+            process.cwd(),
+            `${config.projectName}-client`,
+        );
+    } else if (config.initializeParts === INIT_PARTS.SERVER) {
+        projectPath = path.resolve(
+            process.cwd(),
+            `${config.projectName}-server`,
+        );
+    } else {
+        projectPath = path.resolve(process.cwd(), config.projectName);
+    }
 
     // console.log(
     //     createSuccessMessage(`Creating MERN app: ${config.projectName}`),
@@ -780,6 +863,7 @@ export async function createProject(config) {
             config.initializeParts,
             config.projectName,
             config.includeHelperRoutes,
+            packageManager,
         );
         await processPackageJson(
             projectPath,
@@ -795,6 +879,7 @@ export async function createProject(config) {
             );
         }
 
+        // Only create pnpm workspace file when using pnpm and concurrent setup
         if (config.concurrently && packageManager.name === "pnpm") {
             console.log(
                 createProgressMessage(
@@ -802,6 +887,25 @@ export async function createProject(config) {
                 ),
             );
             await createPnpmWorkspaceFile(projectPath, config.initializeParts);
+        }
+
+        // Create client-specific pnpm-workspace.yaml when using pnpm (regardless of concurrent setup)
+        if (
+            packageManager.name === "pnpm" &&
+            (config.initializeParts === INIT_PARTS.BOTH ||
+                config.initializeParts === INIT_PARTS.CLIENT ||
+                config.concurrently)
+        ) {
+            console.log(
+                createProgressMessage(
+                    "Creating client pnpm workspace configuration...",
+                ),
+            );
+            await createClientPnpmWorkspaceFile(
+                projectPath,
+                config.concurrently,
+                config.initializeParts,
+            );
         }
 
         const initializeParts = config.initializeParts || INIT_PARTS.BOTH;
@@ -947,9 +1051,21 @@ export async function createProject(config) {
             );
         }
 
+        // Determine the actual project folder name that was created
+        let actualProjectName;
+        if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+            actualProjectName = config.projectName;
+        } else if (config.initializeParts === INIT_PARTS.CLIENT) {
+            actualProjectName = `${config.projectName}-client`;
+        } else if (config.initializeParts === INIT_PARTS.SERVER) {
+            actualProjectName = `${config.projectName}-server`;
+        } else {
+            actualProjectName = config.projectName;
+        }
+
         console.log(
             chalk.green.bold(
-                `\n🎉 Project ${config.projectName} created successfully!`,
+                `\n🎉 Project ${actualProjectName} created successfully!`,
             ),
         );
 
@@ -1005,7 +1121,7 @@ export async function createProject(config) {
             console.log(chalk.yellow(`   Error: ${config.installationError}`));
             console.log(
                 chalk.blue(
-                    `   💡 Install manually with: cd ${config.projectName} && ${packageManager.command} ${packageManager.installCmd}`,
+                    `   💡 Install manually with: cd ${actualProjectName} && ${packageManager.command} ${packageManager.installCmd}`,
                 ),
             );
         }

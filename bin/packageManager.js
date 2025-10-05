@@ -193,7 +193,7 @@ export const PACKAGE_MANAGERS = {
             networkOptimized: true,
             contextFlags: {
                 ci: ["--frozen-lockfile", "--reporter=silent"],
-                development: ["--dev"],
+                development: ["--reporter=silent"],
                 production: ["--prod", "--frozen-lockfile"],
                 fast: ["--prefer-frozen-lockfile", "--reporter=silent"],
                 offline: ["--offline", "--prefer-offline"],

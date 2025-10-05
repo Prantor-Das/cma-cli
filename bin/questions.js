@@ -6,7 +6,7 @@ import {
     validateGitHubRepository,
     constructGitHubUrl,
 } from "./lib/gitHandler.js";
-import { GITHUB_URL_PATTERN, REPO_NAME_PATTERN } from "./lib/constants.js";
+// import { GITHUB_URL_PATTERN, REPO_NAME_PATTERN } from "./lib/constants.js";
 
 // Detect available package managers using enhanced system
 async function detectAvailablePackageManagers() {
@@ -44,7 +44,8 @@ export const questions = [
     {
         type: "list",
         name: "packageManager",
-        message: "Select your preferred package manager from the installed options:",
+        message:
+            "Select your preferred package manager from the installed options:",
         choices: async () => {
             const available = await detectAvailablePackageManagers();
 
@@ -74,13 +75,6 @@ export const questions = [
         },
     },
     {
-        type: "confirm",
-        name: "concurrently",
-        message:
-            "Do you want to start frontend & backend together using concurrently?",
-        default: true,
-    },
-    {
         type: "list",
         name: "initializeParts",
         message: "Which parts would you like to initialize?",
@@ -90,7 +84,14 @@ export const questions = [
             { name: "Server only", value: "server" },
         ],
         default: "both",
-        when: (answers) => !answers.concurrently,
+    },
+    {
+        type: "confirm",
+        name: "concurrently",
+        message:
+            "Do you want to start client & server together using concurrently?",
+        default: true,
+        when: (answers) => answers.initializeParts === "both",
     },
     {
         type: "confirm",
