@@ -1,48 +1,30 @@
 import { execa } from "execa";
+import { getEffectivePreference } from "./preferenceManager.js";
+import { PACKAGE_MANAGERS } from "./packageManager.js";
+import {
+  getGitHubUsername,
+  validateGitHubRepository,
+  constructGitHubUrl,
+} from "./lib/gitHandler.js";
+// import { GITHUB_URL_PATTERN, REPO_NAME_PATTERN } from "./lib/constants.js";
 
-// Get Git global username (from user.name)
-async function getGitUsername() {
-  try {
-    const { stdout } = await execa("git", ["config", "--global", "user.name"]);
-    return stdout.trim() || null;
-  } catch {
-    return null;
-  }
-}
+// Detect available package managers using enhanced system
+async function detectAvailablePackageManagers() {
+  const available = [];
 
-// Try to get GitHub username from config or remote URLs
-export async function getGitHubUsername() {
-  try {
-    // Try `github.user` if manually set
-    const { stdout } = await execa("git", ["config", "--global", "github.user"]);
-    if (stdout.trim()) return stdout.trim();
-  } catch {
-    // ignore if not set
-  }
-
-  try {
-    // Look for remotes in global config
-    const { stdout } = await execa("git", [
-      "config",
-      "--get-regexp",
-      "remote\\..*\\.url",
-    ]);
-
-    const lines = stdout.split("\n");
-    for (const line of lines) {
-      // HTTPS pattern
-      let match = line.match(/github\.com\/([^\/]+)\//);
-      if (match) return match[1];
-
-      // SSH pattern
-      match = line.match(/git@github\.com:([^\/]+)\//);
-      if (match) return match[1];
+  for (const [managerName, config] of Object.entries(PACKAGE_MANAGERS)) {
+    try {
+      await execa(config.command, ["--version"], { stdio: "ignore" });
+      available.push({
+        name: `${config.name} ${config.speed}`,
+        value: managerName,
+      });
+    } catch {
+      // Manager not available
     }
-  } catch {
-    // ignore if no remotes
   }
 
-  return null;
+  return available;
 }
 
 export const questions = [
@@ -60,11 +42,72 @@ export const questions = [
     default: "JavaScript",
   },
   {
+    type: "list",
+    name: "packageManager",
+    message:
+      "Select your preferred package manager from the installed options:",
+    choices: async () => {
+      const available = await detectAvailablePackageManagers();
+
+      if (available.length === 0) {
+        // This should never happen as npm is always available with Node.js
+        return [{ name: "npm 📦 Standard", value: "npm" }];
+      }
+
+      return available;
+    },
+    default: async () => {
+      // Check for existing preference first
+      const effectivePreference = await getEffectivePreference();
+      if (effectivePreference.preference) {
+        const available = await detectAvailablePackageManagers();
+        const availableNames = available.map((m) => m.value);
+
+        // If preferred manager is available, use it
+        if (availableNames.includes(effectivePreference.preference)) {
+          return effectivePreference.preference;
+        }
+      }
+
+      // Fall back to fastest available manager
+      const available = await detectAvailablePackageManagers();
+      return available.length > 0 ? available[0].value : "npm";
+    },
+  },
+  {
+    type: "list",
+    name: "initializeParts",
+    message: "Which parts would you like to initialize?",
+    choices: [
+      { name: "Both client and server", value: "both" },
+      { name: "Client only", value: "client" },
+      { name: "Server only", value: "server" },
+    ],
+    default: "both",
+  },
+  {
     type: "confirm",
     name: "concurrently",
     message:
-      "Do you want to start frontend & backend together using concurrently?",
+      "Do you want to start client & server together using concurrently?",
     default: true,
+    when: (answers) => answers.initializeParts === "both",
+  },
+  {
+    type: "confirm",
+    name: "includeHelperRoutes",
+    message: "Include helper routes (user authentication, JWT middleware)?",
+    default: true,
+    when: (answers) => {
+      // Ask this question if:
+      // 1. Concurrently is true (includes both client and server)
+      // 2. OR initializeParts includes server (both or server only)
+      return (
+        answers.concurrently ||
+        answers.initializeParts === "both" ||
+        answers.initializeParts === "server"
+      );
+    },
   },
   {
     type: "confirm",
@@ -81,7 +124,7 @@ export const questions = [
   {
     type: "input",
     name: "gitRepoUrl",
-    message: async (answers) => {
+    message: async () => {
       const githubUsername = await getGitHubUsername();
       if (githubUsername) {
         return `Enter repository name or full URL (GitHub username found: ${githubUsername}):`;
@@ -93,32 +136,25 @@ export const questions = [
       if (!input || input.trim() === "") {
         return "Please provide a valid repository name or URL.";
       }
-      
+
       const trimmedInput = input.trim();
       const githubUsername = await getGitHubUsername();
-      
-      // Check if it's a full GitHub URL
-      const githubUrlPattern = /^https:\/\/github\.com\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\.git$/;
-      
-      if (githubUrlPattern.test(trimmedInput)) {
-        return true; // Valid full URL
-      }
-      
-      // If GitHub username is available, check if it's just a repo name
-      if (githubUsername) {
-        const repoNamePattern = /^[a-zA-Z0-9_-]+$/;
-        if (repoNamePattern.test(trimmedInput)) {
-          return true; // Valid repo name
-        }
-      }
-      
-      // If no GitHub username or invalid format
-      if (githubUsername) {
-        return "Please enter either a repository name or full URL in format: https://github.com/Username/Repo_Name.git";
-      } else {
-        return "Please enter URL in this format: https://github.com/Username/Repo_Name.git";
-      }
-    },
 
+      let finalUrl;
+
+      try {
+        finalUrl = constructGitHubUrl(trimmedInput, githubUsername);
+      } catch (error) {
+        return error.message;
+      }
+
+      const isValid = await validateGitHubRepository(finalUrl);
+
+      if (!isValid) {
+        return `Repository not found or not accessible: ${finalUrl}\nPlease check the URL and ensure the repository exists and is public or you have access to it.`;
+      }
+
+      return true;
+    },
   },
 ];

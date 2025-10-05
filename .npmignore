@@ -24,9 +24,15 @@ Thumbs.db
 
 # Git
 .git/
+.gitignore
 
 # Local environment files
 .env
 
-# Landing page
-cma-landing
+# Extras
+cma-landing/
+scripts/
+
+# prettier config
+.prettierignore
+.prettierrc

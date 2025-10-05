@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts --ignore client --ignore node_modules",
     "build": "tsc -p .",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
