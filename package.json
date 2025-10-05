@@ -14,7 +14,9 @@
     "test:ui": "vitest --ui",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "node scripts/clean.js"
+    "clean": "node scripts/clean.js",
+    "i-all": "node scripts/install-all.js",
+    "i-root": "node scripts/install-all.js --root"
   },
   "files": [
     "bin",
