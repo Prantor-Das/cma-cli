@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Express } from "express";
 import cors, { CorsOptions } from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -20,7 +20,7 @@ requiredEnvVars.forEach((envVar) => {
   }
 });
 
-const app = express();
+const app: Express = express();
 app.disable("x-powered-by");
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";

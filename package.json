@@ -1,59 +1,63 @@
 {
-    "name": "cma-cli",
-    "version": "1.1.0",
-    "description": "A CLI tool to scaffold a modern MERN stack application with a single command.",
-    "main": "bin/index.js",
-    "type": "module",
-    "bin": {
-        "cma-cli": "bin/index.js"
-    },
-    "scripts": {
-        "test": "vitest --run",
-        "test:watch": "vitest",
-        "test:coverage": "vitest --coverage",
-        "test:ui": "vitest --ui"
-    },
-    "files": [
-        "bin",
-        "templates"
-    ],
-    "keywords": [
-        "mern",
-        "cli",
-        "cma-cli",
-        "create-mern-app",
-        "create-mern-app-cli",
-        "scaffold",
-        "generator",
-        "starter",
-        "react",
-        "node",
-        "express",
-        "mongodb",
-        "typescript",
-        "javascript"
-    ],
-    "author": "Prasoon Kumar and Prantor Das",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/prasoonk1204/cma-cli.git"
-    },
-    "bugs": {
-        "url": "https://github.com/prasoonk1204/cma-cli/issues"
-    },
-    "homepage": "https://github.com/prasoonk1204/cma-cli#readme",
-    "dependencies": {
-        "chalk": "^5.6.2",
-        "execa": "^9.3.0",
-        "figlet": "^1.9.3",
-        "fs-extra": "^11.2.0",
-        "inquirer": "^12.9.3"
-    },
-    "devDependencies": {
-        "vitest": "^2.0.0",
-        "@vitest/coverage-v8": "^2.0.0",
-        "@vitest/ui": "^2.0.0",
-        "supertest": "^7.0.0"
-    }
+  "name": "cma-cli",
+  "version": "1.1.0",
+  "description": "A CLI tool to scaffold a modern MERN stack application with a single command.",
+  "main": "bin/index.js",
+  "type": "module",
+  "bin": {
+    "cma-cli": "bin/index.js"
+  },
+  "scripts": {
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "node scripts/clean.js"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "keywords": [
+    "mern",
+    "cli",
+    "cma-cli",
+    "create-mern-app",
+    "create-mern-app-cli",
+    "scaffold",
+    "generator",
+    "starter",
+    "react",
+    "node",
+    "express",
+    "mongodb",
+    "typescript",
+    "javascript"
+  ],
+  "author": "Prasoon Kumar and Prantor Das",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prasoonk1204/cma-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prasoonk1204/cma-cli/issues"
+  },
+  "homepage": "https://github.com/prasoonk1204/cma-cli#readme",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "execa": "^9.3.0",
+    "figlet": "^1.9.3",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^12.9.3"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.0",
+    "@vitest/ui": "^2.0.0",
+    "prettier": "^3.6.2",
+    "supertest": "^7.0.0",
+    "vitest": "^2.0.0"
+  }
 }

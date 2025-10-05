@@ -6,7 +6,7 @@ export async function getGitHubUsername() {
   const strategies = [
     () => execa("git", ["config", "--global", "github.user"]),
     () => execa("git", ["config", "--global", "user.name"]),
-    () => getGitHubUsernameFromRemotes()
+    () => getGitHubUsernameFromRemotes(),
   ];
 
   for (const strategy of strategies) {
@@ -23,9 +23,13 @@ export async function getGitHubUsername() {
 }
 
 async function getGitHubUsernameFromRemotes() {
-  const { stdout } = await execa("git", ["config", "--get-regexp", "remote\\..*\\.url"]);
+  const { stdout } = await execa("git", [
+    "config",
+    "--get-regexp",
+    "remote\\..*\\.url",
+  ]);
   const lines = stdout.split("\n");
-  
+
   for (const line of lines) {
     const httpsMatch = line.match(/github\.com\/([^\/]+)\//);
     if (httpsMatch) return { stdout: httpsMatch[1] };
@@ -33,7 +37,7 @@ async function getGitHubUsernameFromRemotes() {
     const sshMatch = line.match(/git@github\.com:([^\/]+)\//);
     if (sshMatch) return { stdout: sshMatch[1] };
   }
-  
+
   throw new Error("No GitHub username found in remotes");
 }
 
@@ -61,13 +65,15 @@ export function constructGitHubUrl(input, username) {
   }
 
   throw new Error(
-    "Invalid repository format. Expected: repository-name or https://github.com/username/repo.git"
+    "Invalid repository format. Expected: repository-name or https://github.com/username/repo.git",
   );
 }
 
 export async function initializeGit(projectPath, gitRepoInput) {
   if (!gitRepoInput) {
-    console.log("   ⚠️  Git repository initialization skipped - no URL provided");
+    console.log(
+      "   ⚠️  Git repository initialization skipped - no URL provided",
+    );
     return;
   }
 
@@ -83,12 +89,16 @@ export async function initializeGit(projectPath, gitRepoInput) {
 
     await ensureGitAvailable();
     await execa("git", ["init"], { cwd: projectPath });
-    await execa("git", ["remote", "add", "origin", gitRepoUrl], { cwd: projectPath });
+    await execa("git", ["remote", "add", "origin", gitRepoUrl], {
+      cwd: projectPath,
+    });
     await execa("git", ["remote", "-v"], { cwd: projectPath });
 
     console.log("   ▸ Git repository initialized successfully!");
     console.log("   ▸ Next steps:");
-    console.log("      - Make your initial commit: git add . && git commit -m 'Initial commit'");
+    console.log(
+      "      - Make your initial commit: git add . && git commit -m 'Initial commit'",
+    );
     console.log("      - Push to remote: git push -u origin main");
   } catch (error) {
     handleGitError(error, gitRepoInput);
@@ -99,7 +109,9 @@ async function ensureGitAvailable() {
   try {
     await execa("git", ["--version"]);
   } catch {
-    throw new Error("Git is not installed or not available in PATH. Please install Git first.");
+    throw new Error(
+      "Git is not installed or not available in PATH. Please install Git first.",
+    );
   }
 }
 
@@ -109,31 +121,43 @@ function handleGitError(error, gitRepoInput) {
   const errorHandlers = {
     "not installed": () => {
       console.error("   🔍 Reason: Git is not installed on your system");
-      console.error("   💡 Solution: Install Git from https://git-scm.com/downloads");
+      console.error(
+        "   💡 Solution: Install Git from https://git-scm.com/downloads",
+      );
     },
     "Invalid repository format": () => {
       console.error(`   🔍 Reason: ${error.message}`);
-      console.error("   💡 Solution: Use format 'repo-name' or 'https://github.com/username/repo.git'");
+      console.error(
+        "   💡 Solution: Use format 'repo-name' or 'https://github.com/username/repo.git'",
+      );
     },
     "remote add": () => {
       console.error("   🔍 Reason: Failed to add remote origin");
-      console.error("   💡 Solution: Check if the repository URL is correct and accessible");
+      console.error(
+        "   💡 Solution: Check if the repository URL is correct and accessible",
+      );
     },
     "already exists": () => {
-      console.error("   🔍 Reason: Git repository already exists in this directory");
-      console.error("   💡 Solution: Remove existing .git folder or use a different directory");
-    }
+      console.error(
+        "   🔍 Reason: Git repository already exists in this directory",
+      );
+      console.error(
+        "   💡 Solution: Remove existing .git folder or use a different directory",
+      );
+    },
   };
 
-  const handler = Object.entries(errorHandlers).find(([key]) => 
-    error.message.includes(key)
+  const handler = Object.entries(errorHandlers).find(([key]) =>
+    error.message.includes(key),
   )?.[1];
 
   if (handler) {
     handler();
   } else {
     console.error(`   🔍 Reason: ${error.message}`);
-    console.error("   💡 Solution: Check your git configuration and repository URL");
+    console.error(
+      "   💡 Solution: Check your git configuration and repository URL",
+    );
   }
 
   console.error("   ⚠️  Project created successfully, but git setup failed");

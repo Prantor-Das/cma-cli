@@ -39,7 +39,7 @@ export async function detectProjectConfiguration(projectPath) {
       }
     } catch (error) {
       console.warn(
-        chalk.yellow(`⚠️  Could not read package.json: ${error.message}`)
+        chalk.yellow(`⚠️  Could not read package.json: ${error.message}`),
       );
     }
   }
@@ -63,8 +63,8 @@ export async function getPackageName(projectPath, subdir) {
   } catch (error) {
     console.warn(
       chalk.yellow(
-        `⚠️  Could not read package name for ${subdir}: ${error.message}`
-      )
+        `⚠️  Could not read package name for ${subdir}: ${error.message}`,
+      ),
     );
   }
   return subdir;

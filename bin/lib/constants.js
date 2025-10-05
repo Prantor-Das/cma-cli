@@ -54,12 +54,12 @@ export const CONCURRENTLY_DEPENDENCIES = {
   "simple-update-notifier": "^2.0.0",
   touch: "^3.1.0",
   undefsafe: "^2.0.5",
-  
+
   // Additional glob/path dependencies
   "brace-expansion": "^1.1.11",
   "balanced-match": "^1.0.2",
   "path-is-absolute": "^1.0.1",
-  
+
   // Vite/Build tool dependencies (for workspace compatibility)
   rollup: "^4.30.1",
   postcss: "^8.5.1",

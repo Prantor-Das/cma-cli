@@ -7,7 +7,7 @@ export async function readPackageJson(packageJsonPath) {
     return await fs.readJson(packageJsonPath);
   } catch (error) {
     throw new Error(
-      `Failed to read package.json at ${packageJsonPath}: ${error.message}`
+      `Failed to read package.json at ${packageJsonPath}: ${error.message}`,
     );
   }
 }
@@ -17,7 +17,7 @@ export async function writePackageJson(packageJsonPath, packageJson) {
     await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
   } catch (error) {
     throw new Error(
-      `Failed to write package.json at ${packageJsonPath}: ${error.message}`
+      `Failed to write package.json at ${packageJsonPath}: ${error.message}`,
     );
   }
 }
@@ -29,8 +29,8 @@ export async function ensureDirectory(dirPath) {
   } catch (error) {
     console.warn(
       chalk.yellow(
-        `⚠️  Could not create directory ${dirPath}: ${error.message}`
-      )
+        `⚠️  Could not create directory ${dirPath}: ${error.message}`,
+      ),
     );
     return false;
   }

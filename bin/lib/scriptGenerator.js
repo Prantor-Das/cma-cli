@@ -110,7 +110,10 @@ class ScriptGenerator {
   }
 }
 
-export async function updateConcurrentlyScripts(packageJsonPath, packageManager) {
+export async function updateConcurrentlyScripts(
+  packageJsonPath,
+  packageManager,
+) {
   const packageJson = await readPackageJson(packageJsonPath);
 
   if (!packageJson.scripts) {
@@ -134,7 +137,7 @@ export async function updateConcurrentlyScripts(packageJsonPath, packageManager)
 
 async function createPnpmConfig(projectPath) {
   const npmrcPath = path.join(projectPath, ".npmrc");
-  
+
   const pnpmConfig = `# PNPM Configuration for MERN workspace
 # Maximum hoisting to resolve all dependency issues
 hoist-pattern[]=*
@@ -155,15 +158,20 @@ package-import-method=hardlink
 `;
 
   try {
-    await fs.writeFile(npmrcPath, pnpmConfig, 'utf8');
-    console.log(chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"));
+    await fs.writeFile(npmrcPath, pnpmConfig, "utf8");
+    console.log(
+      chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"),
+    );
   } catch (error) {
     console.warn(chalk.yellow(`⚠️  Could not create .npmrc: ${error.message}`));
   }
 }
 
 async function addConcurrentlyDependencies(packageJson, packageManager) {
-  if (!packageJson.devDependencies?.concurrently && !packageJson.dependencies?.concurrently) {
+  if (
+    !packageJson.devDependencies?.concurrently &&
+    !packageJson.dependencies?.concurrently
+  ) {
     return;
   }
 
@@ -173,7 +181,9 @@ async function addConcurrentlyDependencies(packageJson, packageManager) {
 
   const addedDeps = [];
 
-  for (const [depName, depVersion] of Object.entries(CONCURRENTLY_DEPENDENCIES)) {
+  for (const [depName, depVersion] of Object.entries(
+    CONCURRENTLY_DEPENDENCIES,
+  )) {
     const missingInDev = !packageJson.devDependencies[depName];
     const missingInProd = !packageJson.dependencies?.[depName];
 

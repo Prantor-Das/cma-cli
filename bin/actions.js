@@ -3,1164 +3,1123 @@ import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 import {
-    resolvePackageManager,
-    installDependencies as installDeps,
-    performPostInstallationVerification,
-    detectFastestPackageManager,
+  resolvePackageManager,
+  installDependencies as installDeps,
+  performPostInstallationVerification,
+  detectFastestPackageManager,
 } from "./packageManager.js";
 import {
-    getProjectPreference,
-    setProjectPreference,
-    getEffectivePreference,
-    resolvePreferenceConflict,
+  getProjectPreference,
+  setProjectPreference,
+  getEffectivePreference,
+  resolvePreferenceConflict,
 } from "./preferenceManager.js";
 import {
-    attemptFallback,
-    displayFallbackSummary,
-    selectIntelligentFallback,
+  attemptFallback,
+  displayFallbackSummary,
+  selectIntelligentFallback,
 } from "./fallbackHandler.js";
 import { detectProjectConfiguration } from "./lib/projectDetector.js";
 import { updateConcurrentlyScripts } from "./lib/scriptGenerator.js";
 import { initializeGit } from "./lib/gitHandler.js";
 import {
-    readPackageJson,
-    writePackageJson,
-    createProgressMessage,
-    createSuccessMessage,
-    createWarningMessage,
-    createErrorMessage,
+  readPackageJson,
+  writePackageJson,
+  createProgressMessage,
+  createSuccessMessage,
+  createWarningMessage,
+  createErrorMessage,
 } from "./lib/utils.js";
 import { PROJECT_TYPES, INIT_PARTS, LANGUAGES } from "./lib/constants.js";
 
 async function updatePackageJson(packageJsonPath, projectName, type) {
-    const packageJson = await readPackageJson(packageJsonPath);
+  const packageJson = await readPackageJson(packageJsonPath);
 
-    // Validate and convert project name to lowercase
-    const validatedProjectName = validateAndNormalizeProjectName(projectName);
+  // Validate and convert project name to lowercase
+  const validatedProjectName = validateAndNormalizeProjectName(projectName);
 
-    packageJson.name =
-        type === PROJECT_TYPES.ROOT
-            ? validatedProjectName
-            : `${validatedProjectName}-${type}`;
-    await writePackageJson(packageJsonPath, packageJson);
+  packageJson.name =
+    type === PROJECT_TYPES.ROOT
+      ? validatedProjectName
+      : `${validatedProjectName}-${type}`;
+  await writePackageJson(packageJsonPath, packageJson);
 }
 
 function validateAndNormalizeProjectName(projectName) {
-    if (!projectName || typeof projectName !== "string") {
-        throw new Error("Project name must be a non-empty string");
-    }
+  if (!projectName || typeof projectName !== "string") {
+    throw new Error("Project name must be a non-empty string");
+  }
 
-    // Convert to lowercase and replace invalid characters with hyphens
-    let normalized = projectName.toLowerCase().replace(/[^a-z0-9-_]/g, "-");
+  // Convert to lowercase and replace invalid characters with hyphens
+  let normalized = projectName.toLowerCase().replace(/[^a-z0-9-_]/g, "-");
 
-    // Remove leading numbers or special characters
-    normalized = normalized.replace(/^[^a-z]+/, "");
+  // Remove leading numbers or special characters
+  normalized = normalized.replace(/^[^a-z]+/, "");
 
-    // Remove trailing hyphens and underscores
-    normalized = normalized.replace(/[-_]+$/, "");
+  // Remove trailing hyphens and underscores
+  normalized = normalized.replace(/[-_]+$/, "");
 
-    // Replace multiple consecutive hyphens/underscores with single hyphen
-    normalized = normalized.replace(/[-_]+/g, "-");
+  // Replace multiple consecutive hyphens/underscores with single hyphen
+  normalized = normalized.replace(/[-_]+/g, "-");
 
-    if (!normalized || normalized.length === 0) {
-        throw new Error(
-            "Project name must contain at least one letter after normalization",
-        );
-    }
+  if (!normalized || normalized.length === 0) {
+    throw new Error(
+      "Project name must contain at least one letter after normalization",
+    );
+  }
 
-    // Ensure it's not too long (npm package name limit is 214 characters)
-    if (normalized.length > 200) {
-        normalized = normalized.substring(0, 200).replace(/-+$/, "");
-    }
+  // Ensure it's not too long (npm package name limit is 214 characters)
+  if (normalized.length > 200) {
+    normalized = normalized.substring(0, 200).replace(/-+$/, "");
+  }
 
-    return normalized;
+  return normalized;
 }
 
 async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
-    // console.log(createProgressMessage("Removing helper routes..."));
+  // console.log(createProgressMessage("Removing helper routes..."));
 
-    const serverPaths = [];
+  const serverPaths = [];
 
-    // Determine server paths to process
-    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-        serverPaths.push(path.join(projectPath, "server"));
-    } else if (initializeParts === INIT_PARTS.SERVER) {
-        // For server-only setup, server files are in project root
-        serverPaths.push(projectPath);
+  // Determine server paths to process
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    serverPaths.push(path.join(projectPath, "server"));
+  } else if (initializeParts === INIT_PARTS.SERVER) {
+    // For server-only setup, server files are in project root
+    serverPaths.push(projectPath);
+  }
+
+  for (const serverPath of serverPaths) {
+    const filesToRemove = [
+      path.join(serverPath, "src", "middleware", "authMiddleware.js"),
+      path.join(serverPath, "src", "middleware", "authMiddleware.ts"),
+      path.join(serverPath, "src", "models", "user.js"),
+      path.join(serverPath, "src", "models", "user.ts"),
+      path.join(serverPath, "src", "routes", "users.js"),
+      path.join(serverPath, "src", "routes", "users.ts"),
+      path.join(serverPath, "src", "utils", "generateToken.js"),
+      path.join(serverPath, "src", "utils", "generateToken.ts"),
+    ];
+
+    for (const filePath of filesToRemove) {
+      if (await fs.pathExists(filePath)) {
+        await fs.remove(filePath);
+        // console.log(
+        //     chalk.gray(
+        //         `   ✓ Removed ${path.relative(projectPath, filePath)}`,
+        //     ),
+        // );
+      }
     }
 
-    for (const serverPath of serverPaths) {
-        const filesToRemove = [
-            path.join(serverPath, "src", "middleware", "authMiddleware.js"),
-            path.join(serverPath, "src", "middleware", "authMiddleware.ts"),
-            path.join(serverPath, "src", "models", "user.js"),
-            path.join(serverPath, "src", "models", "user.ts"),
-            path.join(serverPath, "src", "routes", "users.js"),
-            path.join(serverPath, "src", "routes", "users.ts"),
-            path.join(serverPath, "src", "utils", "generateToken.js"),
-            path.join(serverPath, "src", "utils", "generateToken.ts"),
-        ];
+    // Update the index route file to remove users import and route
+    const indexRouteJs = path.join(serverPath, "src", "routes", "index.js");
+    const indexRouteTs = path.join(serverPath, "src", "routes", "index.ts");
 
-        for (const filePath of filesToRemove) {
-            if (await fs.pathExists(filePath)) {
-                await fs.remove(filePath);
-                // console.log(
-                //     chalk.gray(
-                //         `   ✓ Removed ${path.relative(projectPath, filePath)}`,
-                //     ),
-                // );
-            }
-        }
-
-        // Update the index route file to remove users import and route
-        const indexRouteJs = path.join(serverPath, "src", "routes", "index.js");
-        const indexRouteTs = path.join(serverPath, "src", "routes", "index.ts");
-
-        if (await fs.pathExists(indexRouteJs)) {
-            await updateIndexRoute(indexRouteJs);
-            // console.log(
-            //     chalk.gray(
-            //         `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
-            //     ),
-            // );
-        }
-
-        if (await fs.pathExists(indexRouteTs)) {
-            await updateIndexRoute(indexRouteTs);
-            // console.log(
-            //     chalk.gray(
-            //         `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
-            //     ),
-            // );
-        }
+    if (await fs.pathExists(indexRouteJs)) {
+      await updateIndexRoute(indexRouteJs);
+      // console.log(
+      //     chalk.gray(
+      //         `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
+      //     ),
+      // );
     }
 
-    // Update Demo files in client to remove helper route references
-    const clientPaths = [];
+    if (await fs.pathExists(indexRouteTs)) {
+      await updateIndexRoute(indexRouteTs);
+      // console.log(
+      //     chalk.gray(
+      //         `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
+      //     ),
+      // );
+    }
+  }
 
-    // Determine client paths to process
-    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-        clientPaths.push(path.join(projectPath, "client"));
-    } else if (initializeParts === INIT_PARTS.CLIENT) {
-        // For client-only setup, client files are in project root
-        clientPaths.push(projectPath);
+  // Update Demo files in client to remove helper route references
+  const clientPaths = [];
+
+  // Determine client paths to process
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    clientPaths.push(path.join(projectPath, "client"));
+  } else if (initializeParts === INIT_PARTS.CLIENT) {
+    // For client-only setup, client files are in project root
+    clientPaths.push(projectPath);
+  }
+
+  for (const clientPath of clientPaths) {
+    const demoJsxPath = path.join(clientPath, "src", "pages", "Demo.jsx");
+    const demoTsxPath = path.join(clientPath, "src", "pages", "Demo.tsx");
+
+    if (await fs.pathExists(demoJsxPath)) {
+      await updateDemoFile(demoJsxPath);
+      // console.log(
+      //     chalk.gray(
+      //         `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
+      //     ),
+      // );
     }
 
-    for (const clientPath of clientPaths) {
-        const demoJsxPath = path.join(clientPath, "src", "pages", "Demo.jsx");
-        const demoTsxPath = path.join(clientPath, "src", "pages", "Demo.tsx");
-
-        if (await fs.pathExists(demoJsxPath)) {
-            await updateDemoFile(demoJsxPath);
-            // console.log(
-            //     chalk.gray(
-            //         `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
-            //     ),
-            // );
-        }
-
-        if (await fs.pathExists(demoTsxPath)) {
-            await updateDemoFile(demoTsxPath);
-            // console.log(
-            //     chalk.gray(
-            //         `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
-            //     ),
-            // );
-        }
+    if (await fs.pathExists(demoTsxPath)) {
+      await updateDemoFile(demoTsxPath);
+      // console.log(
+      //     chalk.gray(
+      //         `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
+      //     ),
+      // );
     }
+  }
 }
 
 async function updateIndexRoute(indexRoutePath) {
-    try {
-        const content = await fs.readFile(indexRoutePath, "utf8");
+  try {
+    const content = await fs.readFile(indexRoutePath, "utf8");
 
-        // Remove the users import line
-        let updatedContent = content.replace(
-            /import users from ["']\.\/users\.js["'];\s*\n?/g,
-            "",
-        );
+    // Remove the users import line
+    let updatedContent = content.replace(
+      /import users from ["']\.\/users\.js["'];\s*\n?/g,
+      "",
+    );
 
-        // Remove the users route line
-        updatedContent = updatedContent.replace(
-            /router\.use\(["']\/users["'], users\);\s*\n?/g,
-            "",
-        );
+    // Remove the users route line
+    updatedContent = updatedContent.replace(
+      /router\.use\(["']\/users["'], users\);\s*\n?/g,
+      "",
+    );
 
-        // Clean up any extra empty lines
-        updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+    // Clean up any extra empty lines
+    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
 
-        await fs.writeFile(indexRoutePath, updatedContent, "utf8");
-    } catch (error) {
-        console.log(
-            chalk.yellow(
-                `⚠️  Could not update ${indexRoutePath}: ${error.message}`,
-            ),
-        );
-    }
+    await fs.writeFile(indexRoutePath, updatedContent, "utf8");
+  } catch (error) {
+    console.log(
+      chalk.yellow(`⚠️  Could not update ${indexRoutePath}: ${error.message}`),
+    );
+  }
 }
 
 async function updateDemoFile(demoFilePath) {
-    try {
-        const content = await fs.readFile(demoFilePath, "utf8");
+  try {
+    const content = await fs.readFile(demoFilePath, "utf8");
 
-        // Define the items to remove (with flexible whitespace and line breaks)
-        const itemsToRemove = [
-            // Database Models item
-            /\{\s*title:\s*["']Database Models["'],\s*code:\s*["']server\/src\/models\/["'],\s*description:\s*["']Create or modify models for your data structure \(remove User model if not needed\)["'],?\s*\},?\s*/gs,
-            // Remove Demo Api Routes item
-            /\{\s*title:\s*["']Remove Demo Api Routes["'],\s*code:\s*["']server\/src\/routes\/users\.js["'],\s*description:\s*["']Delete or modify sample auth and user routes\. Create routes specific to your app["'],?\s*\},?\s*/gs,
-            // Update Route Index item
-            /\{\s*title:\s*["']Update Route Index["'],\s*code:\s*["']server\/src\/routes\/index\.js["'],\s*description:\s*["']Register your new routes and remove unused demo route imports["'],?\s*\},?\s*/gs,
-        ];
+    // Define the items to remove (with flexible whitespace and line breaks)
+    const itemsToRemove = [
+      // Database Models item
+      /\{\s*title:\s*["']Database Models["'],\s*code:\s*["']server\/src\/models\/["'],\s*description:\s*["']Create or modify models for your data structure \(remove User model if not needed\)["'],?\s*\},?\s*/gs,
+      // Remove Demo Api Routes item
+      /\{\s*title:\s*["']Remove Demo Api Routes["'],\s*code:\s*["']server\/src\/routes\/users\.js["'],\s*description:\s*["']Delete or modify sample auth and user routes\. Create routes specific to your app["'],?\s*\},?\s*/gs,
+      // Update Route Index item
+      /\{\s*title:\s*["']Update Route Index["'],\s*code:\s*["']server\/src\/routes\/index\.js["'],\s*description:\s*["']Register your new routes and remove unused demo route imports["'],?\s*\},?\s*/gs,
+    ];
 
-        let updatedContent = content;
+    let updatedContent = content;
 
-        // Remove each item
-        itemsToRemove.forEach((pattern) => {
-            updatedContent = updatedContent.replace(pattern, "");
-        });
+    // Remove each item
+    itemsToRemove.forEach((pattern) => {
+      updatedContent = updatedContent.replace(pattern, "");
+    });
 
-        // Clean up any trailing commas and extra whitespace in the items array
-        updatedContent = updatedContent.replace(/,(\s*)\]/g, "$1]");
-        updatedContent = updatedContent.replace(/\[\s*,/g, "[");
+    // Clean up any trailing commas and extra whitespace in the items array
+    updatedContent = updatedContent.replace(/,(\s*)\]/g, "$1]");
+    updatedContent = updatedContent.replace(/\[\s*,/g, "[");
 
-        // Clean up any extra empty lines
-        updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+    // Clean up any extra empty lines
+    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
 
-        await fs.writeFile(demoFilePath, updatedContent, "utf8");
-    } catch (error) {
-        console.log(
-            chalk.yellow(
-                `⚠️  Could not update ${demoFilePath}: ${error.message}`,
-            ),
-        );
-    }
+    await fs.writeFile(demoFilePath, updatedContent, "utf8");
+  } catch (error) {
+    console.log(
+      chalk.yellow(`⚠️  Could not update ${demoFilePath}: ${error.message}`),
+    );
+  }
 }
 
 async function processTemplateFiles(
-    projectPath,
-    projectName,
-    concurrently,
-    initializeParts,
-    includeHelperRoutes = true,
+  projectPath,
+  projectName,
+  concurrently,
+  initializeParts,
+  includeHelperRoutes = true,
 ) {
-    console.log(chalk.blue("\n▸ Customizing template files..."));
-    console.log(chalk.grey(`   Project: ${projectName}`));
-    console.log(chalk.grey(`   Concurrent: ${concurrently}`));
-    console.log(chalk.grey(`   InitializeParts: ${initializeParts}`));
+  console.log(chalk.blue("\n▸ Customizing template files..."));
+  console.log(chalk.grey(`   Project: ${projectName}`));
+  console.log(chalk.grey(`   Concurrent: ${concurrently}`));
+  console.log(chalk.grey(`   InitializeParts: ${initializeParts}`));
 
-    // Process files based on setup type
-    if (concurrently) {
-        // For concurrent setup, process both client and server from root
-        await processClientFiles(projectPath, projectName, "client");
-        await processServerFiles(
-            projectPath,
-            projectName,
-            "server",
-            includeHelperRoutes,
-        );
-        await processRootFiles(projectPath, projectName);
-    } else if (initializeParts === INIT_PARTS.BOTH) {
-        // For both parts (non-concurrent), use traditional structure
-        await processClientFiles(projectPath, projectName, "client");
-        await processServerFiles(
-            projectPath,
-            projectName,
-            "server",
-            includeHelperRoutes,
-        );
-        await processRootFiles(projectPath, projectName);
-    } else {
-        // For client-only or server-only, files are in project root
-        if (initializeParts === INIT_PARTS.CLIENT) {
-            await processClientFiles(projectPath, projectName, ".");
-        } else if (initializeParts === INIT_PARTS.SERVER) {
-            await processServerFiles(
-                projectPath,
-                projectName,
-                ".",
-                includeHelperRoutes,
-            );
-        }
-        // Process root files for single-part setups too
-        await processRootFiles(projectPath, projectName);
+  // Process files based on setup type
+  if (concurrently) {
+    // For concurrent setup, process both client and server from root
+    await processClientFiles(projectPath, projectName, "client");
+    await processServerFiles(
+      projectPath,
+      projectName,
+      "server",
+      includeHelperRoutes,
+    );
+    await processRootFiles(projectPath, projectName);
+  } else if (initializeParts === INIT_PARTS.BOTH) {
+    // For both parts (non-concurrent), use traditional structure
+    await processClientFiles(projectPath, projectName, "client");
+    await processServerFiles(
+      projectPath,
+      projectName,
+      "server",
+      includeHelperRoutes,
+    );
+    await processRootFiles(projectPath, projectName);
+  } else {
+    // For client-only or server-only, files are in project root
+    if (initializeParts === INIT_PARTS.CLIENT) {
+      await processClientFiles(projectPath, projectName, ".");
+    } else if (initializeParts === INIT_PARTS.SERVER) {
+      await processServerFiles(
+        projectPath,
+        projectName,
+        ".",
+        includeHelperRoutes,
+      );
     }
+    // Process root files for single-part setups too
+    await processRootFiles(projectPath, projectName);
+  }
 }
 
 async function processClientFiles(projectPath, projectName, clientDir) {
-    const clientPath = path.join(projectPath, clientDir);
+  const clientPath = path.join(projectPath, clientDir);
 
-    // Rename gitignore to .gitignore
-    const gitignorePath = path.join(clientPath, "gitignore");
-    const dotGitignorePath = path.join(clientPath, ".gitignore");
+  // Rename gitignore to .gitignore
+  const gitignorePath = path.join(clientPath, "gitignore");
+  const dotGitignorePath = path.join(clientPath, ".gitignore");
 
-    if (await fs.pathExists(gitignorePath)) {
-        await fs.move(gitignorePath, dotGitignorePath);
-        // console.log(
-        //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${clientDir}`),
-        // );
-    }
+  if (await fs.pathExists(gitignorePath)) {
+    await fs.move(gitignorePath, dotGitignorePath);
+    // console.log(
+    //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${clientDir}`),
+    // );
+  }
 
-    // Update index.html title
-    const indexHtmlPath = path.join(clientPath, "index.html");
-    if (await fs.pathExists(indexHtmlPath)) {
-        await updateIndexHtmlTitle(indexHtmlPath, projectName);
-        // console.log(
-        //     chalk.gray(`   ✓ Updated title in ${clientDir}/index.html`),
-        // );
-    }
+  // Update index.html title
+  const indexHtmlPath = path.join(clientPath, "index.html");
+  if (await fs.pathExists(indexHtmlPath)) {
+    await updateIndexHtmlTitle(indexHtmlPath, projectName);
+    // console.log(
+    //     chalk.gray(`   ✓ Updated title in ${clientDir}/index.html`),
+    // );
+  }
 
-    // Update Navigation component (both JSX and TSX)
-    const jsNavPath = path.join(
-        clientPath,
-        "src",
-        "components",
-        "Navigation.jsx",
-    );
-    const tsNavPath = path.join(
-        clientPath,
-        "src",
-        "components",
-        "Navigation.tsx",
-    );
+  // Update Navigation component (both JSX and TSX)
+  const jsNavPath = path.join(
+    clientPath,
+    "src",
+    "components",
+    "Navigation.jsx",
+  );
+  const tsNavPath = path.join(
+    clientPath,
+    "src",
+    "components",
+    "Navigation.tsx",
+  );
 
-    if (await fs.pathExists(jsNavPath)) {
-        await updateNavigationComponent(jsNavPath, projectName);
-        // console.log(
-        //     chalk.gray(
-        //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.jsx`,
-        //     ),
-        // );
-    }
-    if (await fs.pathExists(tsNavPath)) {
-        await updateNavigationComponent(tsNavPath, projectName);
-        // console.log(
-        //     chalk.gray(
-        //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.tsx`,
-        //     ),
-        // );
-    }
+  if (await fs.pathExists(jsNavPath)) {
+    await updateNavigationComponent(jsNavPath, projectName);
+    // console.log(
+    //     chalk.gray(
+    //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.jsx`,
+    //     ),
+    // );
+  }
+  if (await fs.pathExists(tsNavPath)) {
+    await updateNavigationComponent(tsNavPath, projectName);
+    // console.log(
+    //     chalk.gray(
+    //         `   ✓ Updated navigation in ${clientDir}/src/components/Navigation.tsx`,
+    //     ),
+    // );
+  }
 
-    // Update .env.example
-    const envExamplePath = path.join(clientPath, ".env.example");
-    if (await fs.pathExists(envExamplePath)) {
-        await updateEnvExample(envExamplePath, projectName);
-        // console.log(
-        //     chalk.gray(`   ✓ Updated app name in ${clientDir}/.env.example`),
-        // );
-    }
+  // Update .env.example
+  const envExamplePath = path.join(clientPath, ".env.example");
+  if (await fs.pathExists(envExamplePath)) {
+    await updateEnvExample(envExamplePath, projectName);
+    // console.log(
+    //     chalk.gray(`   ✓ Updated app name in ${clientDir}/.env.example`),
+    // );
+  }
 
-    // Delete .gitkeep files
-    const deletedCount = await deleteGitkeepFiles(clientPath);
-    // if (deletedCount > 0) {
-    //     console.log(
-    //         chalk.gray(
-    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${clientDir}`,
-    //         ),
-    //     );
-    // }
+  // Delete .gitkeep files
+  const deletedCount = await deleteGitkeepFiles(clientPath);
+  // if (deletedCount > 0) {
+  //     console.log(
+  //         chalk.gray(
+  //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${clientDir}`,
+  //         ),
+  //     );
+  // }
 }
 
 async function processServerFiles(
-    projectPath,
-    projectName,
-    serverDir,
-    includeHelperRoutes = true,
+  projectPath,
+  projectName,
+  serverDir,
+  includeHelperRoutes = true,
 ) {
-    const serverPath = path.join(projectPath, serverDir);
+  const serverPath = path.join(projectPath, serverDir);
 
-    // Rename gitignore to .gitignore
-    const gitignorePath = path.join(serverPath, "gitignore");
-    const dotGitignorePath = path.join(serverPath, ".gitignore");
+  // Rename gitignore to .gitignore
+  const gitignorePath = path.join(serverPath, "gitignore");
+  const dotGitignorePath = path.join(serverPath, ".gitignore");
 
-    if (await fs.pathExists(gitignorePath)) {
-        await fs.move(gitignorePath, dotGitignorePath);
-        // console.log(
-        //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${serverDir}`),
-        // );
-    }
+  if (await fs.pathExists(gitignorePath)) {
+    await fs.move(gitignorePath, dotGitignorePath);
+    // console.log(
+    //     chalk.gray(`   ✓ Renamed gitignore to .gitignore in ${serverDir}`),
+    // );
+  }
 
-    // Update .env.example if it exists in server
-    const envExamplePath = path.join(serverPath, ".env.example");
-    if (await fs.pathExists(envExamplePath)) {
-        await updateEnvExample(envExamplePath, projectName);
-        // console.log(
-        //     chalk.gray(`   ✓ Updated app name in ${serverDir}/.env.example`),
-        // );
-    }
+  // Update .env.example if it exists in server
+  const envExamplePath = path.join(serverPath, ".env.example");
+  if (await fs.pathExists(envExamplePath)) {
+    await updateEnvExample(envExamplePath, projectName);
+    // console.log(
+    //     chalk.gray(`   ✓ Updated app name in ${serverDir}/.env.example`),
+    // );
+  }
 
-    // Delete .gitkeep files
-    const deletedCount = await deleteGitkeepFiles(serverPath);
-    // if (deletedCount > 0) {
-    //     console.log(
-    //         chalk.gray(
-    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${serverDir}`,
-    //         ),
-    //     );
-    // }
+  // Delete .gitkeep files
+  const deletedCount = await deleteGitkeepFiles(serverPath);
+  // if (deletedCount > 0) {
+  //     console.log(
+  //         chalk.gray(
+  //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from ${serverDir}`,
+  //         ),
+  //     );
+  // }
 }
 
 async function processRootFiles(projectPath, projectName) {
-    // Rename gitignore to .gitignore at root level
-    const gitignorePath = path.join(projectPath, "gitignore");
-    const dotGitignorePath = path.join(projectPath, ".gitignore");
+  // Rename gitignore to .gitignore at root level
+  const gitignorePath = path.join(projectPath, "gitignore");
+  const dotGitignorePath = path.join(projectPath, ".gitignore");
 
-    if (await fs.pathExists(gitignorePath)) {
-        await fs.move(gitignorePath, dotGitignorePath);
-        // console.log(chalk.gray(`   ✓ Renamed gitignore to .gitignore in root`));
-    }
+  if (await fs.pathExists(gitignorePath)) {
+    await fs.move(gitignorePath, dotGitignorePath);
+    // console.log(chalk.gray(`   ✓ Renamed gitignore to .gitignore in root`));
+  }
 
-    // Delete .gitkeep files at root
-    const deletedCount = await deleteGitkeepFiles(projectPath);
-    // if (deletedCount > 0) {
-    //     console.log(
-    //         chalk.gray(
-    //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from root`,
-    //         ),
-    //     );
-    // }
+  // Delete .gitkeep files at root
+  const deletedCount = await deleteGitkeepFiles(projectPath);
+  // if (deletedCount > 0) {
+  //     console.log(
+  //         chalk.gray(
+  //             `   ✓ Removed ${deletedCount} .gitkeep file(s) from root`,
+  //         ),
+  //     );
+  // }
 }
 
 async function updateIndexHtmlTitle(indexHtmlPath, projectName) {
-    try {
-        const content = await fs.readFile(indexHtmlPath, "utf8");
-        let updatedContent = content;
+  try {
+    const content = await fs.readFile(indexHtmlPath, "utf8");
+    let updatedContent = content;
 
-        // Replace title tag content
-        updatedContent = updatedContent.replace(
-            /<title>cma-cli<\/title>/g,
-            `<title>${projectName}</title>`,
-        );
+    // Replace title tag content
+    updatedContent = updatedContent.replace(
+      /<title>cma-cli<\/title>/g,
+      `<title>${projectName}</title>`,
+    );
 
-        // Also handle cases where there might be spaces or different formatting
-        updatedContent = updatedContent.replace(
-            /<title>\s*cma-cli\s*<\/title>/g,
-            `<title>${projectName}</title>`,
-        );
+    // Also handle cases where there might be spaces or different formatting
+    updatedContent = updatedContent.replace(
+      /<title>\s*cma-cli\s*<\/title>/g,
+      `<title>${projectName}</title>`,
+    );
 
-        if (content !== updatedContent) {
-            await fs.writeFile(indexHtmlPath, updatedContent, "utf8");
-            // console.log(
-            //     chalk.gray(
-            //         `     → Replaced title "cma-cli" with "${projectName}"`,
-            //     ),
-            // );
-        } else {
-            // console.log(
-            //     chalk.gray(
-            //         `     → No title replacement needed in ${indexHtmlPath}`,
-            //     ),
-            // );
-        }
-    } catch (error) {
-        console.log(
-            chalk.yellow(
-                `⚠️  Could not update ${indexHtmlPath}: ${error.message}`,
-            ),
-        );
+    if (content !== updatedContent) {
+      await fs.writeFile(indexHtmlPath, updatedContent, "utf8");
+      // console.log(
+      //     chalk.gray(
+      //         `     → Replaced title "cma-cli" with "${projectName}"`,
+      //     ),
+      // );
+    } else {
+      // console.log(
+      //     chalk.gray(
+      //         `     → No title replacement needed in ${indexHtmlPath}`,
+      //     ),
+      // );
     }
+  } catch (error) {
+    console.log(
+      chalk.yellow(`⚠️  Could not update ${indexHtmlPath}: ${error.message}`),
+    );
+  }
 }
 
 async function updateNavigationComponent(navPath, projectName) {
-    try {
-        const content = await fs.readFile(navPath, "utf8");
-        let updatedContent = content;
+  try {
+    const content = await fs.readFile(navPath, "utf8");
+    let updatedContent = content;
 
-        // Replace all instances of cma-cli with the project name
-        // This handles both JSX and TSX files
-        updatedContent = updatedContent.replace(/cma-cli/g, projectName);
+    // Replace all instances of cma-cli with the project name
+    // This handles both JSX and TSX files
+    updatedContent = updatedContent.replace(/cma-cli/g, projectName);
 
-        if (content !== updatedContent) {
-            await fs.writeFile(navPath, updatedContent, "utf8");
-            // console.log(
-            //     chalk.gray(
-            //         `     → Replaced "cma-cli" with "${projectName}" in navigation`,
-            //     ),
-            // );
-        } else {
-            // console.log(
-            //     chalk.gray(
-            //         `     → No navigation replacement needed in ${navPath}`,
-            //     ),
-            // );
-        }
-    } catch (error) {
-        console.log(
-            chalk.yellow(`⚠️  Could not update ${navPath}: ${error.message}`),
-        );
+    if (content !== updatedContent) {
+      await fs.writeFile(navPath, updatedContent, "utf8");
+      // console.log(
+      //     chalk.gray(
+      //         `     → Replaced "cma-cli" with "${projectName}" in navigation`,
+      //     ),
+      // );
+    } else {
+      // console.log(
+      //     chalk.gray(
+      //         `     → No navigation replacement needed in ${navPath}`,
+      //     ),
+      // );
     }
+  } catch (error) {
+    console.log(
+      chalk.yellow(`⚠️  Could not update ${navPath}: ${error.message}`),
+    );
+  }
 }
 
 async function updateEnvExample(envPath, projectName) {
-    try {
-        const content = await fs.readFile(envPath, "utf8");
-        let updatedContent = content;
+  try {
+    const content = await fs.readFile(envPath, "utf8");
+    let updatedContent = content;
 
-        // Replace VITE_APP_NAME=cma-cli with the project name
-        updatedContent = updatedContent.replace(
-            /VITE_APP_NAME=cma-cli/g,
-            `VITE_APP_NAME=${projectName}`,
-        );
+    // Replace VITE_APP_NAME=cma-cli with the project name
+    updatedContent = updatedContent.replace(
+      /VITE_APP_NAME=cma-cli/g,
+      `VITE_APP_NAME=${projectName}`,
+    );
 
-        // Also replace any other app name patterns that might exist
-        updatedContent = updatedContent.replace(
-            /APP_NAME=cma-cli/g,
-            `APP_NAME=${projectName}`,
-        );
+    // Also replace any other app name patterns that might exist
+    updatedContent = updatedContent.replace(
+      /APP_NAME=cma-cli/g,
+      `APP_NAME=${projectName}`,
+    );
 
-        if (content !== updatedContent) {
-            await fs.writeFile(envPath, updatedContent, "utf8");
-            // console.log(
-            //     chalk.gray(`     → Updated app name to "${projectName}"`),
-            // );
-        } else {
-            // console.log(
-            //     chalk.gray(`     → No env update needed in ${envPath}`),
-            // );
-        }
-    } catch (error) {
-        console.log(
-            chalk.yellow(`⚠️  Could not update ${envPath}: ${error.message}`),
-        );
+    if (content !== updatedContent) {
+      await fs.writeFile(envPath, updatedContent, "utf8");
+      // console.log(
+      //     chalk.gray(`     → Updated app name to "${projectName}"`),
+      // );
+    } else {
+      // console.log(
+      //     chalk.gray(`     → No env update needed in ${envPath}`),
+      // );
     }
+  } catch (error) {
+    console.log(
+      chalk.yellow(`⚠️  Could not update ${envPath}: ${error.message}`),
+    );
+  }
 }
 
 async function deleteGitkeepFiles(basePath) {
-    try {
-        // Common directories that might contain .gitkeep files
-        const possiblePaths = [
-            path.join(basePath, "public", ".gitkeep"),
-            path.join(basePath, "src", "assets", ".gitkeep"),
-            path.join(basePath, "src", "context", ".gitkeep"),
-            path.join(basePath, "src", "utils", ".gitkeep"),
-            path.join(basePath, "src", "controllers", ".gitkeep"),
-        ];
+  try {
+    // Common directories that might contain .gitkeep files
+    const possiblePaths = [
+      path.join(basePath, "public", ".gitkeep"),
+      path.join(basePath, "src", "assets", ".gitkeep"),
+      path.join(basePath, "src", "context", ".gitkeep"),
+      path.join(basePath, "src", "utils", ".gitkeep"),
+      path.join(basePath, "src", "controllers", ".gitkeep"),
+    ];
 
-        let deletedCount = 0;
+    let deletedCount = 0;
 
-        for (const gitkeepPath of possiblePaths) {
-            if (await fs.pathExists(gitkeepPath)) {
-                await fs.remove(gitkeepPath);
-                deletedCount++;
-            }
-        }
-
-        // Also recursively search for any other .gitkeep files
-        const additionalGitkeepFiles = await findGitkeepFiles(basePath);
-        for (const gitkeepFile of additionalGitkeepFiles) {
-            if (!possiblePaths.includes(gitkeepFile)) {
-                await fs.remove(gitkeepFile);
-                deletedCount++;
-            }
-        }
-
-        return deletedCount;
-    } catch (error) {
-        console.log(
-            chalk.yellow(
-                `⚠️  Could not delete .gitkeep files in ${basePath}: ${error.message}`,
-            ),
-        );
-        return 0;
+    for (const gitkeepPath of possiblePaths) {
+      if (await fs.pathExists(gitkeepPath)) {
+        await fs.remove(gitkeepPath);
+        deletedCount++;
+      }
     }
+
+    // Also recursively search for any other .gitkeep files
+    const additionalGitkeepFiles = await findGitkeepFiles(basePath);
+    for (const gitkeepFile of additionalGitkeepFiles) {
+      if (!possiblePaths.includes(gitkeepFile)) {
+        await fs.remove(gitkeepFile);
+        deletedCount++;
+      }
+    }
+
+    return deletedCount;
+  } catch (error) {
+    console.log(
+      chalk.yellow(
+        `⚠️  Could not delete .gitkeep files in ${basePath}: ${error.message}`,
+      ),
+    );
+    return 0;
+  }
 }
 
 async function findGitkeepFiles(basePath) {
-    const gitkeepFiles = [];
+  const gitkeepFiles = [];
 
-    try {
-        const items = await fs.readdir(basePath, { withFileTypes: true });
+  try {
+    const items = await fs.readdir(basePath, { withFileTypes: true });
 
-        for (const item of items) {
-            const fullPath = path.join(basePath, item.name);
+    for (const item of items) {
+      const fullPath = path.join(basePath, item.name);
 
-            if (item.isDirectory()) {
-                // Recursively search subdirectories
-                const subGitkeepFiles = await findGitkeepFiles(fullPath);
-                gitkeepFiles.push(...subGitkeepFiles);
-            } else if (item.name === ".gitkeep") {
-                gitkeepFiles.push(fullPath);
-            }
-        }
-    } catch (error) {
-        // Ignore errors for directories that don't exist or can't be read
+      if (item.isDirectory()) {
+        // Recursively search subdirectories
+        const subGitkeepFiles = await findGitkeepFiles(fullPath);
+        gitkeepFiles.push(...subGitkeepFiles);
+      } else if (item.name === ".gitkeep") {
+        gitkeepFiles.push(fullPath);
+      }
     }
+  } catch (error) {
+    // Ignore errors for directories that don't exist or can't be read
+  }
 
-    return gitkeepFiles;
+  return gitkeepFiles;
 }
 
 async function processPackageJson(
-    projectPath,
-    projectName,
-    concurrently,
-    initializeParts = INIT_PARTS.BOTH,
+  projectPath,
+  projectName,
+  concurrently,
+  initializeParts = INIT_PARTS.BOTH,
 ) {
-    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-        // For concurrent or both parts, use the traditional structure
-        const clientPackage = path.join(projectPath, "client", "package.json");
-        const serverPackage = path.join(projectPath, "server", "package.json");
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    // For concurrent or both parts, use the traditional structure
+    const clientPackage = path.join(projectPath, "client", "package.json");
+    const serverPackage = path.join(projectPath, "server", "package.json");
 
-        if (concurrently) {
-            await updatePackageJson(
-                path.join(projectPath, "package.json"),
-                projectName,
-                PROJECT_TYPES.ROOT,
-            );
-        }
-
-        if (
-            concurrently ||
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.CLIENT
-        ) {
-            await updatePackageJson(
-                clientPackage,
-                projectName,
-                PROJECT_TYPES.CLIENT,
-            );
-        }
-
-        if (
-            concurrently ||
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.SERVER
-        ) {
-            await updatePackageJson(
-                serverPackage,
-                projectName,
-                PROJECT_TYPES.SERVER,
-            );
-        }
-    } else {
-        // For client-only or server-only, package.json is in project root
-        if (initializeParts === INIT_PARTS.CLIENT) {
-            await updatePackageJson(
-                path.join(projectPath, "package.json"),
-                projectName,
-                PROJECT_TYPES.CLIENT,
-            );
-        } else if (initializeParts === INIT_PARTS.SERVER) {
-            await updatePackageJson(
-                path.join(projectPath, "package.json"),
-                projectName,
-                PROJECT_TYPES.SERVER,
-            );
-        }
+    if (concurrently) {
+      await updatePackageJson(
+        path.join(projectPath, "package.json"),
+        projectName,
+        PROJECT_TYPES.ROOT,
+      );
     }
+
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.CLIENT
+    ) {
+      await updatePackageJson(clientPackage, projectName, PROJECT_TYPES.CLIENT);
+    }
+
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.SERVER
+    ) {
+      await updatePackageJson(serverPackage, projectName, PROJECT_TYPES.SERVER);
+    }
+  } else {
+    // For client-only or server-only, package.json is in project root
+    if (initializeParts === INIT_PARTS.CLIENT) {
+      await updatePackageJson(
+        path.join(projectPath, "package.json"),
+        projectName,
+        PROJECT_TYPES.CLIENT,
+      );
+    } else if (initializeParts === INIT_PARTS.SERVER) {
+      await updatePackageJson(
+        path.join(projectPath, "package.json"),
+        projectName,
+        PROJECT_TYPES.SERVER,
+      );
+    }
+  }
 }
 
 async function createProjectFolder(projectPath) {
-    await fs.mkdir(projectPath);
+  await fs.mkdir(projectPath);
 }
 
 async function copyTemplateFiles(
-    templateDir,
-    projectPath,
-    concurrently,
-    initializeParts = INIT_PARTS.BOTH,
-    projectName,
-    includeHelperRoutes = true,
+  templateDir,
+  projectPath,
+  concurrently,
+  initializeParts = INIT_PARTS.BOTH,
+  projectName,
+  includeHelperRoutes = true,
 ) {
-    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-        await fs.copy(templateDir, projectPath);
-        if (!concurrently) {
-            await fs.remove(path.join(projectPath, "package.json"));
-        }
-    } else {
-        if (initializeParts === INIT_PARTS.CLIENT) {
-            // Copy client files directly to project root (not in a client subfolder)
-            await fs.copy(path.join(templateDir, "client"), projectPath);
-            // Copy root gitignore to project root for client-only setup
-            const rootGitignorePath = path.join(templateDir, "gitignore");
-            if (await fs.pathExists(rootGitignorePath)) {
-                await fs.copy(
-                    rootGitignorePath,
-                    path.join(projectPath, "gitignore"),
-                );
-            }
-        } else if (initializeParts === INIT_PARTS.SERVER) {
-            // Copy server files directly to project root (not in a server subfolder)
-            await fs.copy(path.join(templateDir, "server"), projectPath);
-            // Copy root gitignore to project root for server-only setup
-            const rootGitignorePath = path.join(templateDir, "gitignore");
-            if (await fs.pathExists(rootGitignorePath)) {
-                await fs.copy(
-                    rootGitignorePath,
-                    path.join(projectPath, "gitignore"),
-                );
-            }
-        }
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    await fs.copy(templateDir, projectPath);
+    if (!concurrently) {
+      await fs.remove(path.join(projectPath, "package.json"));
     }
-
-    // Remove helper routes if not requested
-    if (!includeHelperRoutes) {
-        await removeHelperRoutes(projectPath, concurrently, initializeParts);
+  } else {
+    if (initializeParts === INIT_PARTS.CLIENT) {
+      // Copy client files directly to project root (not in a client subfolder)
+      await fs.copy(path.join(templateDir, "client"), projectPath);
+      // Copy root gitignore to project root for client-only setup
+      const rootGitignorePath = path.join(templateDir, "gitignore");
+      if (await fs.pathExists(rootGitignorePath)) {
+        await fs.copy(rootGitignorePath, path.join(projectPath, "gitignore"));
+      }
+    } else if (initializeParts === INIT_PARTS.SERVER) {
+      // Copy server files directly to project root (not in a server subfolder)
+      await fs.copy(path.join(templateDir, "server"), projectPath);
+      // Copy root gitignore to project root for server-only setup
+      const rootGitignorePath = path.join(templateDir, "gitignore");
+      if (await fs.pathExists(rootGitignorePath)) {
+        await fs.copy(rootGitignorePath, path.join(projectPath, "gitignore"));
+      }
     }
+  }
 
-    // Rename gitignore to .gitignore and update project name in files
-    await processTemplateFiles(
-        projectPath,
-        projectName,
-        concurrently,
-        initializeParts,
-        includeHelperRoutes,
-    );
+  // Remove helper routes if not requested
+  if (!includeHelperRoutes) {
+    await removeHelperRoutes(projectPath, concurrently, initializeParts);
+  }
+
+  // Rename gitignore to .gitignore and update project name in files
+  await processTemplateFiles(
+    projectPath,
+    projectName,
+    concurrently,
+    initializeParts,
+    includeHelperRoutes,
+  );
 }
 
 async function createPnpmWorkspaceFile(projectPath, initializeParts = "both") {
-    const workspaceConfig = {
-        packages: [],
-    };
+  const workspaceConfig = {
+    packages: [],
+  };
 
-    if (initializeParts === "both") {
-        workspaceConfig.packages = ["client", "server"];
-    } else if (initializeParts === "client") {
-        workspaceConfig.packages = ["client"];
-    } else if (initializeParts === "server") {
-        workspaceConfig.packages = ["server"];
-    }
+  if (initializeParts === "both") {
+    workspaceConfig.packages = ["client", "server"];
+  } else if (initializeParts === "client") {
+    workspaceConfig.packages = ["client"];
+  } else if (initializeParts === "server") {
+    workspaceConfig.packages = ["server"];
+  }
 
-    const yamlContent = `packages:\n${workspaceConfig.packages
-        .map((pkg) => `  - "${pkg}"`)
-        .join("\n")}\n`;
+  const yamlContent = `packages:\n${workspaceConfig.packages
+    .map((pkg) => `  - "${pkg}"`)
+    .join("\n")}\n`;
 
-    await fs.writeFile(
-        path.join(projectPath, "pnpm-workspace.yaml"),
-        yamlContent,
-        "utf8",
-    );
+  await fs.writeFile(
+    path.join(projectPath, "pnpm-workspace.yaml"),
+    yamlContent,
+    "utf8",
+  );
 }
 
 async function createClientPnpmWorkspaceFile(
-    projectPath,
-    concurrently,
-    initializeParts,
+  projectPath,
+  concurrently,
+  initializeParts,
 ) {
-    const clientPnpmWorkspaceContent = `ignoredBuiltDependencies:
+  const clientPnpmWorkspaceContent = `ignoredBuiltDependencies:
   - "@tailwindcss/oxide"
 `;
 
-    let clientPath;
+  let clientPath;
 
-    // Determine the client path based on setup type
-    if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-        clientPath = path.join(projectPath, "client");
-    } else if (initializeParts === INIT_PARTS.CLIENT) {
-        // For client-only setup, client files are in project root
-        clientPath = projectPath;
-    }
+  // Determine the client path based on setup type
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    clientPath = path.join(projectPath, "client");
+  } else if (initializeParts === INIT_PARTS.CLIENT) {
+    // For client-only setup, client files are in project root
+    clientPath = projectPath;
+  }
 
-    // Only create if we have a client path (client is being initialized)
-    if (clientPath && (await fs.pathExists(clientPath))) {
-        await fs.writeFile(
-            path.join(clientPath, "pnpm-workspace.yaml"),
-            clientPnpmWorkspaceContent,
-            "utf8",
-        );
-    }
+  // Only create if we have a client path (client is being initialized)
+  if (clientPath && (await fs.pathExists(clientPath))) {
+    await fs.writeFile(
+      path.join(clientPath, "pnpm-workspace.yaml"),
+      clientPnpmWorkspaceContent,
+      "utf8",
+    );
+  }
 }
 
 export async function createProject(config) {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
 
-    const templateDir = path.resolve(
-        __dirname,
-        `../templates/${config.language === "JavaScript" ? "js" : "ts"}`,
+  const templateDir = path.resolve(
+    __dirname,
+    `../templates/${config.language === "JavaScript" ? "js" : "ts"}`,
+  );
+
+  // Determine project path based on initialization parts
+  let projectPath;
+  if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+    projectPath = path.resolve(process.cwd(), config.projectName);
+  } else if (config.initializeParts === INIT_PARTS.CLIENT) {
+    projectPath = path.resolve(process.cwd(), `${config.projectName}-client`);
+  } else if (config.initializeParts === INIT_PARTS.SERVER) {
+    projectPath = path.resolve(process.cwd(), `${config.projectName}-server`);
+  } else {
+    projectPath = path.resolve(process.cwd(), config.projectName);
+  }
+
+  // console.log(
+  //     createSuccessMessage(`Creating MERN app: ${config.projectName}`),
+  // );
+
+  let verificationResults = null;
+
+  try {
+    // Package managers are no longer installed automatically
+    const wasNewlyInstalled = false;
+
+    // Detect existing project configuration
+    const projectConfig = await detectProjectConfiguration(projectPath);
+
+    // Get effective preference (user/project)
+    const effectivePreference = await getEffectivePreference(projectPath);
+
+    // Resolve package manager with enhanced logic
+    let packageManager;
+    try {
+      // Handle preference conflicts if multiple preferences exist
+      if (
+        projectConfig.suggestedManager &&
+        effectivePreference.preference &&
+        projectConfig.suggestedManager !== effectivePreference.preference
+      ) {
+        const resolvedPreference = await resolvePreferenceConflict(
+          effectivePreference.preference,
+          null, // No project preference yet
+          projectConfig.suggestedManager,
+        );
+        packageManager = await resolvePackageManager(
+          resolvedPreference || config.packageManager,
+        );
+      } else {
+        packageManager = await resolvePackageManager(config.packageManager);
+      }
+    } catch (resolveError) {
+      console.log(
+        chalk.yellow(
+          `⚠️  Package manager resolution failed: ${resolveError.message}`,
+        ),
+      );
+      console.log(chalk.blue("🔄 Attempting intelligent fallback..."));
+
+      // Use intelligent fallback selection
+      const fallbackManager = await selectIntelligentFallback(
+        config.packageManager,
+        {
+          hasLockFile: projectConfig.lockFiles.length > 0,
+          isCI: !!process.env.CI,
+          projectSize: "medium", // Could be determined by template complexity
+          networkCondition: "fast", // Could be detected
+          preferredFeatures: ["speed", "reliability"],
+        },
+      );
+
+      if (fallbackManager) {
+        packageManager = await resolvePackageManager(fallbackManager);
+      } else {
+        // Final fallback to fastest available
+        packageManager = await detectFastestPackageManager();
+      }
+    }
+
+    // console.log(createProgressMessage("Setting up project structure..."));
+    await createProjectFolder(projectPath);
+    await copyTemplateFiles(
+      templateDir,
+      projectPath,
+      config.concurrently,
+      config.initializeParts,
+      config.projectName,
+      config.includeHelperRoutes,
+      packageManager,
+    );
+    await processPackageJson(
+      projectPath,
+      config.projectName,
+      config.concurrently,
+      config.initializeParts,
     );
 
-    // Determine project path based on initialization parts
-    let projectPath;
-    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
-        projectPath = path.resolve(process.cwd(), config.projectName);
-    } else if (config.initializeParts === INIT_PARTS.CLIENT) {
-        projectPath = path.resolve(
-            process.cwd(),
-            `${config.projectName}-client`,
-        );
-    } else if (config.initializeParts === INIT_PARTS.SERVER) {
-        projectPath = path.resolve(
-            process.cwd(),
-            `${config.projectName}-server`,
-        );
-    } else {
-        projectPath = path.resolve(process.cwd(), config.projectName);
+    if (config.concurrently) {
+      await updateConcurrentlyScripts(
+        path.join(projectPath, "package.json"),
+        packageManager,
+      );
     }
 
-    // console.log(
-    //     createSuccessMessage(`Creating MERN app: ${config.projectName}`),
-    // );
+    // Only create pnpm workspace file when using pnpm and concurrent setup
+    if (config.concurrently && packageManager.name === "pnpm") {
+      console.log(
+        createProgressMessage("Creating pnpm workspace configuration..."),
+      );
+      await createPnpmWorkspaceFile(projectPath, config.initializeParts);
+    }
 
-    let verificationResults = null;
+    // Create client-specific pnpm-workspace.yaml when using pnpm (regardless of concurrent setup)
+    if (
+      packageManager.name === "pnpm" &&
+      (config.initializeParts === INIT_PARTS.BOTH ||
+        config.initializeParts === INIT_PARTS.CLIENT ||
+        config.concurrently)
+    ) {
+      console.log(
+        createProgressMessage(
+          "Creating client pnpm workspace configuration...",
+        ),
+      );
+      await createClientPnpmWorkspaceFile(
+        projectPath,
+        config.concurrently,
+        config.initializeParts,
+      );
+    }
 
-    try {
-        // Package managers are no longer installed automatically
-        const wasNewlyInstalled = false;
+    const initializeParts = config.initializeParts || INIT_PARTS.BOTH;
 
-        // Detect existing project configuration
-        const projectConfig = await detectProjectConfiguration(projectPath);
+    if (
+      config.concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.CLIENT
+    ) {
+      console.log(createProgressMessage("Configuring frontend..."));
+      const techStack =
+        config.language === LANGUAGES.TYPESCRIPT
+          ? "React + TypeScript (Vite)"
+          : "React (Vite)";
+      console.log(chalk.gray(`   Using ${techStack}`));
+    }
 
-        // Get effective preference (user/project)
-        const effectivePreference = await getEffectivePreference(projectPath);
+    if (
+      config.concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.SERVER
+    ) {
+      console.log(createProgressMessage("Configuring backend..."));
+      console.log(chalk.gray("   Using Express.js + MongoDB"));
+    }
 
-        // Resolve package manager with enhanced logic
-        let packageManager;
-        try {
-            // Handle preference conflicts if multiple preferences exist
-            if (
-                projectConfig.suggestedManager &&
-                effectivePreference.preference &&
-                projectConfig.suggestedManager !==
-                    effectivePreference.preference
-            ) {
-                const resolvedPreference = await resolvePreferenceConflict(
-                    effectivePreference.preference,
-                    null, // No project preference yet
-                    projectConfig.suggestedManager,
-                );
-                packageManager = await resolvePackageManager(
-                    resolvedPreference || config.packageManager,
-                );
-            } else {
-                packageManager = await resolvePackageManager(
-                    config.packageManager,
-                );
-            }
-        } catch (resolveError) {
-            console.log(
-                chalk.yellow(
-                    `⚠️  Package manager resolution failed: ${resolveError.message}`,
-                ),
-            );
-            console.log(chalk.blue("🔄 Attempting intelligent fallback..."));
+    if (config.concurrently) {
+      console.log(createProgressMessage("Adding concurrently scripts..."));
+    }
 
-            // Use intelligent fallback selection
-            const fallbackManager = await selectIntelligentFallback(
-                config.packageManager,
-                {
-                    hasLockFile: projectConfig.lockFiles.length > 0,
-                    isCI: !!process.env.CI,
-                    projectSize: "medium", // Could be determined by template complexity
-                    networkCondition: "fast", // Could be detected
-                    preferredFeatures: ["speed", "reliability"],
-                },
-            );
+    if (config.installDependencies) {
+      console.log(
+        chalk.blue(
+          "▸ Installing dependencies with performance optimizations...",
+        ),
+      );
 
-            if (fallbackManager) {
-                packageManager = await resolvePackageManager(fallbackManager);
-            } else {
-                // Final fallback to fastest available
-                packageManager = await detectFastestPackageManager();
-            }
-        }
-
-        // console.log(createProgressMessage("Setting up project structure..."));
-        await createProjectFolder(projectPath);
-        await copyTemplateFiles(
-            templateDir,
-            projectPath,
-            config.concurrently,
-            config.initializeParts,
-            config.projectName,
-            config.includeHelperRoutes,
-            packageManager,
-        );
-        await processPackageJson(
-            projectPath,
-            config.projectName,
-            config.concurrently,
-            config.initializeParts,
+      try {
+        // Install dependencies with enhanced error handling
+        await installDeps(
+          projectPath,
+          packageManager,
+          config.concurrently,
+          config.initializeParts,
         );
 
-        if (config.concurrently) {
-            await updateConcurrentlyScripts(
-                path.join(projectPath, "package.json"),
-                packageManager,
-            );
-        }
-
-        // Only create pnpm workspace file when using pnpm and concurrent setup
-        if (config.concurrently && packageManager.name === "pnpm") {
-            console.log(
-                createProgressMessage(
-                    "Creating pnpm workspace configuration...",
-                ),
-            );
-            await createPnpmWorkspaceFile(projectPath, config.initializeParts);
-        }
-
-        // Create client-specific pnpm-workspace.yaml when using pnpm (regardless of concurrent setup)
-        if (
-            packageManager.name === "pnpm" &&
-            (config.initializeParts === INIT_PARTS.BOTH ||
-                config.initializeParts === INIT_PARTS.CLIENT ||
-                config.concurrently)
-        ) {
-            console.log(
-                createProgressMessage(
-                    "Creating client pnpm workspace configuration...",
-                ),
-            );
-            await createClientPnpmWorkspaceFile(
-                projectPath,
-                config.concurrently,
-                config.initializeParts,
-            );
-        }
-
-        const initializeParts = config.initializeParts || INIT_PARTS.BOTH;
-
-        if (
-            config.concurrently ||
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.CLIENT
-        ) {
-            console.log(createProgressMessage("Configuring frontend..."));
-            const techStack =
-                config.language === LANGUAGES.TYPESCRIPT
-                    ? "React + TypeScript (Vite)"
-                    : "React (Vite)";
-            console.log(chalk.gray(`   Using ${techStack}`));
-        }
-
-        if (
-            config.concurrently ||
-            initializeParts === INIT_PARTS.BOTH ||
-            initializeParts === INIT_PARTS.SERVER
-        ) {
-            console.log(createProgressMessage("Configuring backend..."));
-            console.log(chalk.gray("   Using Express.js + MongoDB"));
-        }
-
-        if (config.concurrently) {
-            console.log(
-                createProgressMessage("Adding concurrently scripts..."),
-            );
-        }
-
-        if (config.installDependencies) {
-            console.log(
-                chalk.blue(
-                    "▸ Installing dependencies with performance optimizations...",
-                ),
-            );
-
-            try {
-                // Install dependencies with enhanced error handling
-                await installDeps(
-                    projectPath,
-                    packageManager,
-                    config.concurrently,
-                    config.initializeParts,
-                );
-
-                // Perform post-installation verification
-                // console.log(chalk.blue("▸ Verifying installation..."));
-                verificationResults = await performPostInstallationVerification(
-                    projectPath,
-                    packageManager,
-                    config.initializeParts,
-                );
-
-                // if (!verificationResults.success) {
-                //     console.log(
-                //         chalk.yellow(
-                //             "⚠️  Installation verification found issues, but continuing...",
-                //         ),
-                //     );
-                // }
-            } catch (installError) {
-                console.log(
-                    chalk.red(
-                        `❌ Dependency installation failed: ${installError.message}`,
-                    ),
-                );
-                console.log(
-                    chalk.blue("🔄 Attempting fallback installation..."),
-                );
-
-                try {
-                    // Attempt fallback with different package manager
-                    const fallbackResult = await attemptFallback(
-                        packageManager.name,
-                        installError,
-                    );
-
-                    if (fallbackResult.fallbackUsed) {
-                        console.log(
-                            chalk.blue(
-                                `📦 Retrying installation with ${fallbackResult.manager.name}...`,
-                            ),
-                        );
-
-                        await installDeps(
-                            projectPath,
-                            fallbackResult.manager,
-                            config.concurrently,
-                            config.initializeParts,
-                        );
-
-                        // Update package manager reference for next steps
-                        packageManager = fallbackResult.manager;
-                        config.fallbackUsed = true;
-                        config.originalManager = fallbackResult.originalManager;
-
-                        // Verify fallback installation
-                        verificationResults =
-                            await performPostInstallationVerification(
-                                projectPath,
-                                packageManager,
-                                config.initializeParts,
-                            );
-                    }
-                } catch (fallbackError) {
-                    console.log(
-                        chalk.red(
-                            `❌ Fallback installation also failed: ${fallbackError.message}`,
-                        ),
-                    );
-                    console.log(
-                        chalk.yellow(
-                            `💡 You can install dependencies manually later with: ${packageManager.command} ${packageManager.installCmd}`,
-                        ),
-                    );
-
-                    // Don't throw error - project creation should continue
-                    config.installationFailed = true;
-                    config.installationError = fallbackError.message;
-                }
-            }
-        }
-
-        if (config.gitRepo && config.gitRepoUrl) {
-            console.log(chalk.blue("\n▸ Initializing git repository..."));
-            await initializeGit(projectPath, config.gitRepoUrl);
-        }
-
-        // Set project preference if different from user preference
-        const currentProjectPref = await getProjectPreference(projectPath);
-        if (
-            !currentProjectPref &&
-            packageManager.name !== effectivePreference.preference
-        ) {
-            await setProjectPreference(projectPath, packageManager.name);
-            console.log(
-                chalk.blue(
-                    `📋 Set project preference to ${packageManager.name}`,
-                ),
-            );
-        }
-
-        // Determine the actual project folder name that was created
-        let actualProjectName;
-        if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
-            actualProjectName = config.projectName;
-        } else if (config.initializeParts === INIT_PARTS.CLIENT) {
-            actualProjectName = `${config.projectName}-client`;
-        } else if (config.initializeParts === INIT_PARTS.SERVER) {
-            actualProjectName = `${config.projectName}-server`;
-        } else {
-            actualProjectName = config.projectName;
-        }
-
-        console.log(
-            chalk.green.bold(
-                `\n🎉 Project ${actualProjectName} created successfully!`,
-            ),
+        // Perform post-installation verification
+        // console.log(chalk.blue("▸ Verifying installation..."));
+        verificationResults = await performPostInstallationVerification(
+          projectPath,
+          packageManager,
+          config.initializeParts,
         );
 
-        // Display fallback summary if any fallbacks were used
-        displayFallbackSummary();
-
-        // Generate and display installation report if dependencies were installed
-        // if (config.installDependencies && verificationResults) {
-        //     console.log(chalk.cyan("\n📊 Installation Summary:"));
-
-        //     if (config.fallbackUsed) {
-        //         console.log(
-        //             chalk.yellow(
-        //                 `   ⚠️  Fallback used: ${config.originalManager} → ${packageManager.name}`,
-        //             ),
-        //         );
-        //     }
-
-        //     if (verificationResults.success) {
-        //         console.log(
-        //             chalk.green(
-        //                 "   ✅ All dependencies installed and verified",
-        //             ),
-        //         );
-        //     } else {
-        //         console.log(
-        //             chalk.yellow("   ⚠️  Installation completed with warnings"),
-        //         );
-        //     }
-
-        //     // Show performance metrics if available
-        //     if (verificationResults.summary) {
-        //         const totalPackages = Object.values(
-        //             verificationResults.summary,
-        //         ).reduce((sum, info) => sum + (info.packages || 0), 0);
-        //         if (totalPackages > 0) {
-        //             console.log(
-        //                 chalk.gray(
-        //                     `   📦 Total packages installed: ${totalPackages}`,
-        //                 ),
-        //             );
-        //         }
-        //     }
+        // if (!verificationResults.success) {
+        //     console.log(
+        //         chalk.yellow(
+        //             "⚠️  Installation verification found issues, but continuing...",
+        //         ),
+        //     );
         // }
+      } catch (installError) {
+        console.log(
+          chalk.red(
+            `❌ Dependency installation failed: ${installError.message}`,
+          ),
+        );
+        console.log(chalk.blue("🔄 Attempting fallback installation..."));
 
-        // Show installation failure message if needed
-        if (config.installationFailed) {
+        try {
+          // Attempt fallback with different package manager
+          const fallbackResult = await attemptFallback(
+            packageManager.name,
+            installError,
+          );
+
+          if (fallbackResult.fallbackUsed) {
             console.log(
-                chalk.yellow(
-                    "\n⚠️  Project created successfully, but dependency installation failed",
-                ),
+              chalk.blue(
+                `📦 Retrying installation with ${fallbackResult.manager.name}...`,
+              ),
             );
-            console.log(chalk.yellow(`   Error: ${config.installationError}`));
-            console.log(
-                chalk.blue(
-                    `   💡 Install manually with: cd ${actualProjectName} && ${packageManager.command} ${packageManager.installCmd}`,
-                ),
+
+            await installDeps(
+              projectPath,
+              fallbackResult.manager,
+              config.concurrently,
+              config.initializeParts,
             );
+
+            // Update package manager reference for next steps
+            packageManager = fallbackResult.manager;
+            config.fallbackUsed = true;
+            config.originalManager = fallbackResult.originalManager;
+
+            // Verify fallback installation
+            verificationResults = await performPostInstallationVerification(
+              projectPath,
+              packageManager,
+              config.initializeParts,
+            );
+          }
+        } catch (fallbackError) {
+          console.log(
+            chalk.red(
+              `❌ Fallback installation also failed: ${fallbackError.message}`,
+            ),
+          );
+          console.log(
+            chalk.yellow(
+              `💡 You can install dependencies manually later with: ${packageManager.command} ${packageManager.installCmd}`,
+            ),
+          );
+
+          // Don't throw error - project creation should continue
+          config.installationFailed = true;
+          config.installationError = fallbackError.message;
         }
-
-        // Store package manager and installation status for next steps
-        config.resolvedPackageManager = packageManager;
-        config.packageManagerWasInstalled = wasNewlyInstalled;
-    } catch (err) {
-        console.error(chalk.red(`\n❌ Setup failed: ${err.message}`));
-
-        // Display fallback summary even on failure
-        displayFallbackSummary();
-
-        // Provide helpful error context
-        if (err.message.includes("package manager")) {
-            console.log(
-                chalk.yellow(
-                    "💡 Try using a different package manager or install it manually",
-                ),
-            );
-        }
-
-        if (err.message.includes("permission")) {
-            console.log(
-                chalk.yellow(
-                    "💡 Check file permissions or try running with appropriate privileges",
-                ),
-            );
-        }
-
-        if (
-            err.message.includes("network") ||
-            err.message.includes("timeout")
-        ) {
-            console.log(
-                chalk.yellow("💡 Check your internet connection and try again"),
-            );
-        }
-
-        throw err;
+      }
     }
+
+    if (config.gitRepo && config.gitRepoUrl) {
+      console.log(chalk.blue("\n▸ Initializing git repository..."));
+      await initializeGit(projectPath, config.gitRepoUrl);
+    }
+
+    // Set project preference if different from user preference
+    const currentProjectPref = await getProjectPreference(projectPath);
+    if (
+      !currentProjectPref &&
+      packageManager.name !== effectivePreference.preference
+    ) {
+      await setProjectPreference(projectPath, packageManager.name);
+      console.log(
+        chalk.blue(`📋 Set project preference to ${packageManager.name}`),
+      );
+    }
+
+    // Determine the actual project folder name that was created
+    let actualProjectName;
+    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+      actualProjectName = config.projectName;
+    } else if (config.initializeParts === INIT_PARTS.CLIENT) {
+      actualProjectName = `${config.projectName}-client`;
+    } else if (config.initializeParts === INIT_PARTS.SERVER) {
+      actualProjectName = `${config.projectName}-server`;
+    } else {
+      actualProjectName = config.projectName;
+    }
+
+    console.log(
+      chalk.green.bold(
+        `\n🎉 Project ${actualProjectName} created successfully!`,
+      ),
+    );
+
+    // Display fallback summary if any fallbacks were used
+    displayFallbackSummary();
+
+    // Generate and display installation report if dependencies were installed
+    // if (config.installDependencies && verificationResults) {
+    //     console.log(chalk.cyan("\n📊 Installation Summary:"));
+
+    //     if (config.fallbackUsed) {
+    //         console.log(
+    //             chalk.yellow(
+    //                 `   ⚠️  Fallback used: ${config.originalManager} → ${packageManager.name}`,
+    //             ),
+    //         );
+    //     }
+
+    //     if (verificationResults.success) {
+    //         console.log(
+    //             chalk.green(
+    //                 "   ✅ All dependencies installed and verified",
+    //             ),
+    //         );
+    //     } else {
+    //         console.log(
+    //             chalk.yellow("   ⚠️  Installation completed with warnings"),
+    //         );
+    //     }
+
+    //     // Show performance metrics if available
+    //     if (verificationResults.summary) {
+    //         const totalPackages = Object.values(
+    //             verificationResults.summary,
+    //         ).reduce((sum, info) => sum + (info.packages || 0), 0);
+    //         if (totalPackages > 0) {
+    //             console.log(
+    //                 chalk.gray(
+    //                     `   📦 Total packages installed: ${totalPackages}`,
+    //                 ),
+    //             );
+    //         }
+    //     }
+    // }
+
+    // Show installation failure message if needed
+    if (config.installationFailed) {
+      console.log(
+        chalk.yellow(
+          "\n⚠️  Project created successfully, but dependency installation failed",
+        ),
+      );
+      console.log(chalk.yellow(`   Error: ${config.installationError}`));
+      console.log(
+        chalk.blue(
+          `   💡 Install manually with: cd ${actualProjectName} && ${packageManager.command} ${packageManager.installCmd}`,
+        ),
+      );
+    }
+
+    // Store package manager and installation status for next steps
+    config.resolvedPackageManager = packageManager;
+    config.packageManagerWasInstalled = wasNewlyInstalled;
+  } catch (err) {
+    console.error(chalk.red(`\n❌ Setup failed: ${err.message}`));
+
+    // Display fallback summary even on failure
+    displayFallbackSummary();
+
+    // Provide helpful error context
+    if (err.message.includes("package manager")) {
+      console.log(
+        chalk.yellow(
+          "💡 Try using a different package manager or install it manually",
+        ),
+      );
+    }
+
+    if (err.message.includes("permission")) {
+      console.log(
+        chalk.yellow(
+          "💡 Check file permissions or try running with appropriate privileges",
+        ),
+      );
+    }
+
+    if (err.message.includes("network") || err.message.includes("timeout")) {
+      console.log(
+        chalk.yellow("💡 Check your internet connection and try again"),
+      );
+    }
+
+    throw err;
+  }
 }
