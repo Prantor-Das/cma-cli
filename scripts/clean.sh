@@ -8,29 +8,88 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🧹 Starting cleanup process...${NC}\n"
+echo -e "${BLUE}🧹 Starting comprehensive cleanup process...${NC}\n"
 
 # Find and count targets
-echo -e "${CYAN}Scanning for node_modules directories and lock files...${NC}"
+echo -e "${CYAN}Scanning for dependencies, lock files, cache directories, and logs...${NC}"
 
 # Find node_modules directories
 NODE_MODULES_DIRS=$(find . -name "node_modules" -type d 2>/dev/null)
-NODE_MODULES_COUNT=$(echo "$NODE_MODULES_DIRS" | grep -c . 2>/dev/null || echo "0")
+if [ -z "$NODE_MODULES_DIRS" ]; then
+    NODE_MODULES_COUNT=0
+else
+    NODE_MODULES_COUNT=$(echo "$NODE_MODULES_DIRS" | wc -l)
+fi
 
-# Find lock files
-LOCK_FILES=$(find . -name "package-lock.json" -o -name "pnpm-lock.yaml" -o -name "yarn.lock" -o -name "bun.lockb" 2>/dev/null)
-LOCK_FILES_COUNT=$(echo "$LOCK_FILES" | grep -c . 2>/dev/null || echo "0")
+# Find all types of lock files
+LOCK_FILES=$(find . \( \
+    -name "package-lock.json" -o \
+    -name "npm-shrinkwrap.json" -o \
+    -name "yarn.lock" -o \
+    -name ".yarnrc" -o \
+    -name ".yarnrc.yml" -o \
+    -name "pnpm-lock.yaml" -o \
+    -name "pnpm-workspace.yaml" -o \
+    -name ".pnpmfile.cjs" -o \
+    -name "bun.lockb" -o \
+    -name "shrinkwrap.yaml" -o \
+    -name "package-lock.yaml" -o \
+    -name "rush.json" -o \
+    -name "common-versions.json" \
+\) -type f 2>/dev/null)
+if [ -z "$LOCK_FILES" ]; then
+    LOCK_FILES_COUNT=0
+else
+    LOCK_FILES_COUNT=$(echo "$LOCK_FILES" | wc -l)
+fi
 
-TOTAL_COUNT=$((NODE_MODULES_COUNT + LOCK_FILES_COUNT))
+# Find cache directories
+CACHE_DIRS=$(find . \( \
+    -name ".npm" -o \
+    -name ".yarn" -o \
+    -name ".pnpm-store" -o \
+    -name ".pnpm" -o \
+    -name ".cache" -o \
+    -name ".next" -o \
+    -name ".nuxt" -o \
+    -name "dist" -o \
+    -name "build" -o \
+    -name ".turbo" -o \
+    -name ".rush" \
+\) -type d 2>/dev/null | grep -v node_modules)
+if [ -z "$CACHE_DIRS" ]; then
+    CACHE_DIRS_COUNT=0
+else
+    CACHE_DIRS_COUNT=$(echo "$CACHE_DIRS" | wc -l)
+fi
+
+# Find log files
+LOG_FILES=$(find . \( \
+    -name "npm-debug.log*" -o \
+    -name "yarn-debug.log*" -o \
+    -name "yarn-error.log*" -o \
+    -name "pnpm-debug.log*" -o \
+    -name "lerna-debug.log*" -o \
+    -name ".pnpm-debug.log*" \
+\) -type f 2>/dev/null)
+if [ -z "$LOG_FILES" ]; then
+    LOG_FILES_COUNT=0
+else
+    LOG_FILES_COUNT=$(echo "$LOG_FILES" | wc -l)
+fi
+
+TOTAL_COUNT=$((NODE_MODULES_COUNT + LOCK_FILES_COUNT + CACHE_DIRS_COUNT + LOG_FILES_COUNT))
 
 if [ "$TOTAL_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}✨ No node_modules directories or lock files found. Already clean!${NC}"
+    echo -e "${GREEN}✨ No cleanup targets found. Already clean!${NC}"
     exit 0
 fi
 
 echo -e "${CYAN}\nFound:${NC}"
 echo -e "${CYAN}  • $NODE_MODULES_COUNT node_modules directories${NC}"
-echo -e "${CYAN}  • $LOCK_FILES_COUNT lock files${NC}\n"
+echo -e "${CYAN}  • $LOCK_FILES_COUNT lock files${NC}"
+echo -e "${CYAN}  • $CACHE_DIRS_COUNT cache directories${NC}"
+echo -e "${CYAN}  • $LOG_FILES_COUNT log files${NC}\n"
 
 REMOVED_COUNT=0
 
@@ -63,6 +122,38 @@ if [ "$LOCK_FILES_COUNT" -gt 0 ]; then
             fi
         fi
     done <<< "$LOCK_FILES"
+    echo ""
+fi
+
+# Remove cache directories
+if [ "$CACHE_DIRS_COUNT" -gt 0 ]; then
+    echo -e "${YELLOW}Removing cache directories...${NC}"
+    while IFS= read -r dir; do
+        if [ -n "$dir" ]; then
+            if rm -rf "$dir" 2>/dev/null; then
+                echo -e "${GREEN}✓ Removed cache directory: ${dir#./}${NC}"
+                REMOVED_COUNT=$((REMOVED_COUNT + 1))
+            else
+                echo -e "${RED}✗ Failed to remove cache directory: ${dir#./}${NC}"
+            fi
+        fi
+    done <<< "$CACHE_DIRS"
+    echo ""
+fi
+
+# Remove log files
+if [ "$LOG_FILES_COUNT" -gt 0 ]; then
+    echo -e "${YELLOW}Removing log files...${NC}"
+    while IFS= read -r file; do
+        if [ -n "$file" ]; then
+            if rm -f "$file" 2>/dev/null; then
+                echo -e "${GREEN}✓ Removed log file: ${file#./}${NC}"
+                REMOVED_COUNT=$((REMOVED_COUNT + 1))
+            else
+                echo -e "${RED}✗ Failed to remove log file: ${file#./}${NC}"
+            fi
+        fi
+    done <<< "$LOG_FILES"
     echo ""
 fi
 
