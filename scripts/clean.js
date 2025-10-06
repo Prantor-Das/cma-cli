@@ -9,35 +9,35 @@ const colors = {
   green: (text) => `\x1b[32m${text}\x1b[0m`,
   yellow: (text) => `\x1b[33m${text}\x1b[0m`,
   blue: (text) => `\x1b[34m${text}\x1b[0m`,
-  cyan: (text) => `\x1b[36m${text}\x1b[0m`
+  cyan: (text) => `\x1b[36m${text}\x1b[0m`,
 };
 
 const lockFiles = [
   // NPM lock files
   "package-lock.json",
   "npm-shrinkwrap.json",
-  
+
   // Yarn lock files
   "yarn.lock",
   ".yarnrc",
   ".yarnrc.yml",
-  
+
   // PNPM lock files
   "pnpm-lock.yaml",
   "pnpm-workspace.yaml",
   ".pnpmfile.cjs",
-  
+
   // Bun lock files
   "bun.lock",
-  
+
   // Other package manager files
   "shrinkwrap.yaml",
   "package-lock.yaml",
-  
+
   // Rush lock files
   "rush.json",
   "common-versions.json",
-  
+
   // Lerna lock files
   "lerna-debug.log",
 ];
@@ -75,8 +75,8 @@ const foundLogFiles = [];
  * Check if a file matches any of the log file patterns
  */
 function matchesLogPattern(filename) {
-  return logFiles.some(pattern => {
-    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+  return logFiles.some((pattern) => {
+    const regex = new RegExp(pattern.replace(/\*/g, ".*"));
     return regex.test(filename);
   });
 }
@@ -115,7 +115,7 @@ function findTargets(dir) {
         if (lockFiles.includes(item)) {
           foundLockFiles.push(fullPath);
         }
-        
+
         // Check for log files
         if (matchesLogPattern(item)) {
           foundLogFiles.push(fullPath);
@@ -159,18 +159,20 @@ async function cleanup() {
 
   // Find all targets
   console.log(
-    colors.cyan("Scanning for dependencies, lock files, cache directories, and logs..."),
+    colors.cyan(
+      "Scanning for dependencies, lock files, cache directories, and logs...",
+    ),
   );
   findTargets(process.cwd());
 
-  const totalTargets = nodeModulesDirs.length + foundLockFiles.length + foundCacheDirectories.length + foundLogFiles.length;
+  const totalTargets =
+    nodeModulesDirs.length +
+    foundLockFiles.length +
+    foundCacheDirectories.length +
+    foundLogFiles.length;
 
   if (totalTargets === 0) {
-    console.log(
-      colors.green(
-        "✨ No cleanup targets found. Already clean!",
-      ),
-    );
+    console.log(colors.green("✨ No cleanup targets found. Already clean!"));
     return;
   }
 
@@ -179,7 +181,9 @@ async function cleanup() {
     colors.cyan(`  • ${nodeModulesDirs.length} node_modules directories`),
   );
   console.log(colors.cyan(`  • ${foundLockFiles.length} lock files`));
-  console.log(colors.cyan(`  • ${foundCacheDirectories.length} cache directories`));
+  console.log(
+    colors.cyan(`  • ${foundCacheDirectories.length} cache directories`),
+  );
   console.log(colors.cyan(`  • ${foundLogFiles.length} log files`));
   console.log("");
 
