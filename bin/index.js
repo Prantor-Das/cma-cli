@@ -12,7 +12,11 @@ import {
   isPackageManagerAvailableInShell,
   getPackageManagerPath,
 } from "./packageManager.js";
-import { validateProjectName } from "./lib/utils.js";
+import {
+  validateProjectName,
+  getCurrentDirectoryName,
+  checkCurrentDirectoryConflicts,
+} from "./lib/utils.js";
 import { INIT_PARTS } from "./lib/constants.js";
 
 function displayBanner() {
@@ -45,11 +49,18 @@ function createProjectConfig(answers) {
     throw new Error(validation.error);
   }
 
+  const isCurrentDirectory = validation.isCurrentDirectory;
+  const actualProjectName = isCurrentDirectory
+    ? getCurrentDirectoryName()
+    : validation.name;
+
   return {
     ...answers,
     projectName: validation.name,
-    frontendPath: `${validation.name}/client`,
-    backendPath: `${validation.name}/server`,
+    actualProjectName,
+    isCurrentDirectory,
+    frontendPath: isCurrentDirectory ? "client" : `${validation.name}/client`,
+    backendPath: isCurrentDirectory ? "server" : `${validation.name}/server`,
   };
 }
 
@@ -91,13 +102,14 @@ async function displayNextSteps(config, packageManager, needsShellSetup) {
   const initializeParts = config.initializeParts || INIT_PARTS.BOTH;
   let targetDirectory = config.projectName;
 
-  if (initializeParts === INIT_PARTS.SERVER) {
-    targetDirectory = `${config.projectName}-server`;
-  } else if (initializeParts === INIT_PARTS.CLIENT) {
-    targetDirectory = `${config.projectName}-client`;
+  if (!config.isCurrentDirectory) {
+    if (initializeParts === INIT_PARTS.SERVER) {
+      targetDirectory = `${config.projectName}-server`;
+    } else if (initializeParts === INIT_PARTS.CLIENT) {
+      targetDirectory = `${config.projectName}-client`;
+    }
+    console.log(chalk.white(`  cd ${targetDirectory}`));
   }
-
-  console.log(chalk.white(`  cd ${targetDirectory}`));
 
   const fullPath = await getPackageManagerPath(packageManager.name);
   const useFullPath = needsShellSetup && fullPath;
@@ -142,14 +154,22 @@ function displaySeparateCommands(config, installCmd, devCmd, startCmd) {
   if (initializeParts === INIT_PARTS.BOTH) {
     // Both client and server - show subdirectory navigation
     console.log(chalk.cyan("\n  To run the frontend:"));
-    console.log(chalk.white("  cd client"));
+    if (!config.isCurrentDirectory) {
+      console.log(chalk.white("  cd client"));
+    } else {
+      console.log(chalk.white("  cd client"));
+    }
     if (!config.installDependencies) {
       console.log(chalk.white(`  ${installCmd}`));
     }
     console.log(chalk.white(`  ${devCmd}`));
 
     console.log(chalk.cyan("\n  To run the backend (in a new terminal):"));
-    console.log(chalk.white("  cd server"));
+    if (!config.isCurrentDirectory) {
+      console.log(chalk.white("  cd server"));
+    } else {
+      console.log(chalk.white("  cd server"));
+    }
     if (!config.installDependencies) {
       console.log(chalk.white(`  ${installCmd}`));
     }
@@ -176,6 +196,35 @@ async function run() {
 
     const answers = await inquirer.prompt(questions);
     const config = createProjectConfig(answers);
+
+    // Check for conflicts if using current directory
+    if (config.isCurrentDirectory) {
+      const conflicts = await checkCurrentDirectoryConflicts();
+      if (conflicts.length > 0) {
+        console.log(
+          chalk.yellow(`\n⚠️  Found existing files in current directory:`),
+        );
+        conflicts.forEach((file) => console.log(chalk.gray(`   • ${file}`)));
+
+        const { proceed } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "proceed",
+            message: "Continue anyway? (existing files may be overwritten)",
+            default: false,
+          },
+        ]);
+
+        if (!proceed) {
+          console.log(
+            chalk.blue(
+              "\n👋 Setup cancelled. Choose a different directory or clean up existing files.",
+            ),
+          );
+          process.exit(0);
+        }
+      }
+    }
 
     await storeUserPreference(answers.packageManager);
     await createProject(config);

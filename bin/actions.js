@@ -860,8 +860,11 @@ async function processPackageJson(
   }
 }
 
-async function createProjectFolder(projectPath) {
-  await fs.mkdir(projectPath);
+async function createProjectFolder(projectPath, isCurrentDirectory = false) {
+  if (!isCurrentDirectory) {
+    await fs.mkdir(projectPath);
+  }
+  // If using current directory, folder already exists - no need to create
 }
 
 async function copyTemplateFiles(
@@ -1010,7 +1013,14 @@ export async function createProject(config) {
 
   // Determine project path based on initialization parts
   let projectPath;
-  if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+
+  if (config.isCurrentDirectory) {
+    // Use current directory for all cases when projectName is "./"
+    projectPath = process.cwd();
+  } else if (
+    config.concurrently ||
+    config.initializeParts === INIT_PARTS.BOTH
+  ) {
     projectPath = path.resolve(process.cwd(), config.projectName);
   } else if (config.initializeParts === INIT_PARTS.CLIENT) {
     projectPath = path.resolve(process.cwd(), `${config.projectName}-client`);
@@ -1085,19 +1095,19 @@ export async function createProject(config) {
     }
 
     // console.log(createProgressMessage("Setting up project structure..."));
-    await createProjectFolder(projectPath);
+    await createProjectFolder(projectPath, config.isCurrentDirectory);
     await copyTemplateFiles(
       templateDir,
       projectPath,
       config.concurrently,
       config.initializeParts,
-      config.projectName,
+      config.actualProjectName || config.projectName,
       config.includeHelperRoutes,
       packageManager,
     );
     await processPackageJson(
       projectPath,
-      config.projectName,
+      config.actualProjectName || config.projectName,
       config.concurrently,
       config.initializeParts,
     );
@@ -1291,7 +1301,12 @@ export async function createProject(config) {
 
     // Determine the actual project folder name that was created
     let actualProjectName;
-    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+    if (config.isCurrentDirectory) {
+      actualProjectName = config.actualProjectName;
+    } else if (
+      config.concurrently ||
+      config.initializeParts === INIT_PARTS.BOTH
+    ) {
       actualProjectName = config.projectName;
     } else if (config.initializeParts === INIT_PARTS.CLIENT) {
       actualProjectName = `${config.projectName}-client`;
@@ -1301,11 +1316,9 @@ export async function createProject(config) {
       actualProjectName = config.projectName;
     }
 
-    console.log(
-      chalk.green.bold(
-        `\n🎉 Project ${actualProjectName} created successfully!`,
-      ),
-    );
+    const successMessage = `\n🎉 Project ${actualProjectName} created successfully!`;
+
+    console.log(chalk.green.bold(successMessage));
 
     // Display fallback summary if any fallbacks were used
     displayFallbackSummary();

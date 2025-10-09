@@ -35,7 +35,7 @@ export default function Demo() {
             rel="noopener noreferrer"
             className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
           >
-            View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
+            Star on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
           </a>
           <a
             href="https://npmjs.com/package/cma-cli"

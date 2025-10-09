@@ -31,7 +31,7 @@ export const questions = [
   {
     type: "input",
     name: "projectName",
-    message: "What is your project name?",
+    message: "What is your project name? (use './' for current directory)",
     default: "my-mern-app",
   },
   {
