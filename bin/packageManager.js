@@ -633,17 +633,30 @@ export async function installDependencies(
 
     // Determine installation paths
     if (concurrently) {
-      installPaths = [{ path: projectPath, name: "project" }];
+      // For concurrent projects, install in each workspace separately to avoid hoisting issues
+      installPaths = [
+        { path: projectPath, name: "root" },
+        { path: path.join(projectPath, "client"), name: "client" },
+        { path: path.join(projectPath, "server"), name: "server" },
+      ];
     } else {
-      if (initializeParts === "both" || initializeParts === "client") {
+      if (initializeParts === "both") {
         installPaths.push({
           path: path.join(projectPath, "client"),
           name: "client",
         });
-      }
-      if (initializeParts === "both" || initializeParts === "server") {
         installPaths.push({
           path: path.join(projectPath, "server"),
+          name: "server",
+        });
+      } else if (initializeParts === "client") {
+        installPaths.push({
+          path: projectPath,
+          name: "client",
+        });
+      } else if (initializeParts === "server") {
+        installPaths.push({
+          path: projectPath,
           name: "server",
         });
       }
@@ -917,15 +930,25 @@ export async function performPostInstallationVerification(
   const pathsToCheck = [];
 
   // Determine paths to verify
-  if (initializeParts === "both" || initializeParts === "client") {
+  if (initializeParts === "both") {
     pathsToCheck.push({
       path: path.join(projectPath, "client"),
       name: "client",
     });
-  }
-  if (initializeParts === "both" || initializeParts === "server") {
     pathsToCheck.push({
       path: path.join(projectPath, "server"),
+      name: "server",
+    });
+  } else if (initializeParts === "client") {
+    // For client-only setup, client files are in project root
+    pathsToCheck.push({
+      path: projectPath,
+      name: "client",
+    });
+  } else if (initializeParts === "server") {
+    // For server-only setup, server files are in project root
+    pathsToCheck.push({
+      path: projectPath,
       name: "server",
     });
   }

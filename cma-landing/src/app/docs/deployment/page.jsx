@@ -65,7 +65,7 @@ export default function DeploymentPage() {
                                 production MongoDB database.
                             </li>
                             <li>
-                                `CLIENT_URL`: The URL of your deployed client
+                                `CORS_ORIGIN`: The URL of your deployed client
                                 application.
                             </li>
                             <li>

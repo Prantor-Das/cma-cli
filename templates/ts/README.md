@@ -102,7 +102,7 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
     PORT=8000
     NODE_ENV=development
     MONGODB_URI=mongodb://127.0.0.1:27017/your_app_name
-    CLIENT_URL=http://localhost:5173
+    CORS_ORIGIN=http://localhost:5173
     JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
     ```
 
@@ -174,7 +174,7 @@ NODE_ENV=development
 MONGODB_URI=mongodb://127.0.0.1:27017/mern_app
 
 # Client URL for CORS
-CLIENT_URL=http://localhost:5173
+CORS_ORIGIN=http://localhost:5173
 
 # JWT Configuration
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production

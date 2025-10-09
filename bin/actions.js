@@ -76,6 +76,231 @@ function validateAndNormalizeProjectName(projectName) {
   return normalized;
 }
 
+async function removeServerContentFromDemo(projectPath) {
+  // For client-only setup, remove server-related content from Demo files
+  const demoJsxPath = path.join(projectPath, "src", "pages", "Demo.jsx");
+  const demoTsxPath = path.join(projectPath, "src", "pages", "Demo.tsx");
+
+  if (await fs.pathExists(demoJsxPath)) {
+    await updateDemoFileForClientOnly(demoJsxPath, false);
+  }
+
+  if (await fs.pathExists(demoTsxPath)) {
+    await updateDemoFileForClientOnly(demoTsxPath, true);
+  }
+
+  // Also update constants file to remove API_ENDPOINTS
+  const constantsJsPath = path.join(
+    projectPath,
+    "src",
+    "config",
+    "constants.js",
+  );
+  const constantsTsPath = path.join(
+    projectPath,
+    "src",
+    "config",
+    "constants.ts",
+  );
+
+  if (await fs.pathExists(constantsJsPath)) {
+    await updateConstantsFileForClientOnly(constantsJsPath, false);
+  }
+
+  if (await fs.pathExists(constantsTsPath)) {
+    await updateConstantsFileForClientOnly(constantsTsPath, true);
+  }
+
+  // Remove axios dependency from package.json
+  const packageJsonPath = path.join(projectPath, "package.json");
+  if (await fs.pathExists(packageJsonPath)) {
+    await removeAxiosFromPackageJson(packageJsonPath);
+  }
+}
+
+async function updateDemoFileForClientOnly(demoFilePath, isTypeScript) {
+  try {
+    const content = await fs.readFile(demoFilePath, "utf8");
+    let updatedContent = content;
+
+    // Remove server-related imports
+    updatedContent = updatedContent.replace(
+      /import\s+axios\s+from\s+["']axios["'];\s*\n?/g,
+      "",
+    );
+    updatedContent = updatedContent.replace(
+      /import\s+\{\s*API_ENDPOINTS\s*\}\s+from\s+["'][^"']*constants["'];\s*\n?/g,
+      "",
+    );
+
+    // Remove unused React imports (useState, useEffect) since ApiMessage component is removed
+    updatedContent = updatedContent.replace(
+      /import\s+\{\s*useState,\s*useEffect\s*\}\s+from\s+["']react["'];\s*\n?/g,
+      "",
+    );
+
+    // Remove Server icon from imports
+    updatedContent = updatedContent.replace(/(\s+)Server,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/,(\s*)Server(\s*),/g, ",$1$2");
+    updatedContent = updatedContent.replace(/Server,(\s*)/g, "$1");
+
+    // Remove API-related icons from imports
+    updatedContent = updatedContent.replace(/(\s+)AlertCircle,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/(\s+)CheckCircle,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/(\s+)Loader2,(\s*)/g, "$1$2");
+
+    // Clean up any trailing commas in imports
+    updatedContent = updatedContent.replace(
+      /,(\s*)\}\s+from\s+["']lucide-react["']/g,
+      '$1} from "lucide-react"',
+    );
+
+    // Remove the entire API Endpoint and Status section
+    const apiSectionRegex =
+      /\s*{\/\* API Endpoint and Status \*\/}[\s\S]*?<\/div>\s*<\/div>/;
+    updatedContent = updatedContent.replace(apiSectionRegex, "");
+
+    // Remove the Server Setup DocumentationCard
+    const serverCardRegex =
+      /\s*<DocumentationCard\s+icon=\{Server\}[\s\S]*?\/>\s*/;
+    updatedContent = updatedContent.replace(serverCardRegex, "");
+
+    // Update client setup items to remove server references
+    updatedContent = updatedContent.replace(
+      /client\/\.env\.example/g,
+      ".env.example",
+    );
+    updatedContent = updatedContent.replace(
+      /client\/src\/pages\/Demo\.jsx/g,
+      "src/pages/Demo.jsx",
+    );
+
+    // Remove the ApiMessage component definition
+    const apiMessageRegex = /function ApiMessage\(\)\s*\{[\s\S]*?\n\}/;
+    updatedContent = updatedContent.replace(apiMessageRegex, "");
+
+    // For TypeScript, also remove the ApiState interface
+    if (isTypeScript) {
+      const apiStateRegex = /interface ApiState\s*\{[\s\S]*?\n\}/;
+      updatedContent = updatedContent.replace(apiStateRegex, "");
+    }
+
+    // Clean up any extra empty lines
+    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+
+    await fs.writeFile(demoFilePath, updatedContent, "utf8");
+  } catch (error) {}
+}
+
+async function updateConstantsFileForClientOnly(
+  constantsFilePath,
+  isTypeScript,
+) {
+  try {
+    const content = await fs.readFile(constantsFilePath, "utf8");
+    let updatedContent = content;
+
+    // Remove API_ENDPOINTS export
+    if (isTypeScript) {
+      updatedContent = updatedContent.replace(
+        /export const API_ENDPOINTS = \{[\s\S]*?\} as const;\s*\n?/g,
+        "",
+      );
+    } else {
+      updatedContent = updatedContent.replace(
+        /export const API_ENDPOINTS = \{[\s\S]*?\};\s*\n?/g,
+        "",
+      );
+    }
+
+    // Remove API_BASE_URL since it's only used for API_ENDPOINTS
+    updatedContent = updatedContent.replace(
+      /export const API_BASE_URL =[\s\S]*?;\s*\n?/g,
+      "",
+    );
+
+    // Clean up any extra empty lines
+    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+
+    await fs.writeFile(constantsFilePath, updatedContent, "utf8");
+  } catch (error) {}
+}
+
+async function removeAxiosFromPackageJson(packageJsonPath) {
+  try {
+    const packageJson = await readPackageJson(packageJsonPath);
+
+    // Remove axios from dependencies
+    if (packageJson.dependencies && packageJson.dependencies.axios) {
+      delete packageJson.dependencies.axios;
+    }
+
+    await writePackageJson(packageJsonPath, packageJson);
+  } catch (error) {}
+}
+
+async function addBunTypesToPackageJson(packageJsonPath) {
+  try {
+    const packageJson = await readPackageJson(packageJsonPath);
+
+    // Initialize devDependencies if it doesn't exist
+    if (!packageJson.devDependencies) {
+      packageJson.devDependencies = {};
+    }
+
+    // Add @types/bun if not already present
+    if (!packageJson.devDependencies["@types/bun"]) {
+      packageJson.devDependencies["@types/bun"] = "latest";
+    }
+
+    await writePackageJson(packageJsonPath, packageJson);
+  } catch (error) {}
+}
+
+async function addBunTypesToProject(
+  projectPath,
+  packageManager,
+  concurrently,
+  initializeParts = INIT_PARTS.BOTH,
+) {
+  // Only add @types/bun if using bun as package manager
+  if (packageManager.name !== "bun") {
+    return;
+  }
+
+  const packageJsonPaths = [];
+
+  // Determine which package.json files to update
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    // For concurrent or both parts, update client and server package.json files
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.CLIENT
+    ) {
+      packageJsonPaths.push(path.join(projectPath, "client", "package.json"));
+    }
+
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.SERVER
+    ) {
+      packageJsonPaths.push(path.join(projectPath, "server", "package.json"));
+    }
+  } else {
+    // For client-only or server-only, package.json is in project root
+    packageJsonPaths.push(path.join(projectPath, "package.json"));
+  }
+
+  // Add @types/bun to each package.json file
+  for (const packageJsonPath of packageJsonPaths) {
+    if (await fs.pathExists(packageJsonPath)) {
+      await addBunTypesToPackageJson(packageJsonPath);
+    }
+  }
+}
+
 async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
   // console.log(createProgressMessage("Removing helper routes..."));
 
@@ -677,6 +902,11 @@ async function copyTemplateFiles(
     await removeHelperRoutes(projectPath, concurrently, initializeParts);
   }
 
+  // Remove server-related content from Demo files for client-only projects
+  if (initializeParts === INIT_PARTS.CLIENT) {
+    await removeServerContentFromDemo(projectPath);
+  }
+
   // Rename gitignore to .gitignore and update project name in files
   await processTemplateFiles(
     projectPath,
@@ -735,6 +965,35 @@ async function createClientPnpmWorkspaceFile(
     await fs.writeFile(
       path.join(clientPath, "pnpm-workspace.yaml"),
       clientPnpmWorkspaceContent,
+      "utf8",
+    );
+  }
+}
+
+async function createServerPnpmWorkspaceFile(
+  projectPath,
+  concurrently,
+  initializeParts,
+) {
+  const serverPnpmWorkspaceContent = `ignoredBuiltDependencies:
+  - esbuild
+`;
+
+  let serverPath;
+
+  // Determine the server path based on setup type
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    serverPath = path.join(projectPath, "server");
+  } else if (initializeParts === INIT_PARTS.SERVER) {
+    // For server-only setup, server files are in project root
+    serverPath = projectPath;
+  }
+
+  // Only create if we have a server path (server is being initialized)
+  if (serverPath && (await fs.pathExists(serverPath))) {
+    await fs.writeFile(
+      path.join(serverPath, "pnpm-workspace.yaml"),
+      serverPnpmWorkspaceContent,
       "utf8",
     );
   }
@@ -843,6 +1102,14 @@ export async function createProject(config) {
       config.initializeParts,
     );
 
+    // Add @types/bun to devDependencies when using bun as package manager
+    await addBunTypesToProject(
+      projectPath,
+      packageManager,
+      config.concurrently,
+      config.initializeParts,
+    );
+
     if (config.concurrently) {
       await updateConcurrentlyScripts(
         path.join(projectPath, "package.json"),
@@ -852,9 +1119,9 @@ export async function createProject(config) {
 
     // Only create pnpm workspace file when using pnpm and concurrent setup
     if (config.concurrently && packageManager.name === "pnpm") {
-      console.log(
-        createProgressMessage("Creating pnpm workspace configuration..."),
-      );
+      // console.log(
+      //   createProgressMessage("Creating pnpm workspace configuration..."),
+      // );
       await createPnpmWorkspaceFile(projectPath, config.initializeParts);
     }
 
@@ -865,12 +1132,21 @@ export async function createProject(config) {
         config.initializeParts === INIT_PARTS.CLIENT ||
         config.concurrently)
     ) {
-      console.log(
-        createProgressMessage(
-          "Creating client pnpm workspace configuration...",
-        ),
-      );
       await createClientPnpmWorkspaceFile(
+        projectPath,
+        config.concurrently,
+        config.initializeParts,
+      );
+    }
+
+    // Create server-specific pnpm-workspace.yaml when using pnpm (regardless of concurrent setup)
+    if (
+      packageManager.name === "pnpm" &&
+      (config.initializeParts === INIT_PARTS.BOTH ||
+        config.initializeParts === INIT_PARTS.SERVER ||
+        config.concurrently)
+    ) {
+      await createServerPnpmWorkspaceFile(
         projectPath,
         config.concurrently,
         config.initializeParts,

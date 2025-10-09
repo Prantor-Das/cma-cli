@@ -368,7 +368,7 @@ export default function JavascriptPage() {
                                     </tr>
                                     <tr>
                                         <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            `CLIENT_URL`
+                                            `CORS_ORIGIN`
                                         </td>
                                         <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
                                             The URL of the client application.

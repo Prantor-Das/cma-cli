@@ -59,7 +59,7 @@ const features = [
 const Features = () => (
     <section className="py-20 max-w-6xl mx-auto" id="features">
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">
+            <h2 className="text-3xl md:text-4xl font-bold space-font">
                 Packed with Features
             </h2>
             <p className="text-zinc-500 dark:text-zinc-400 mt-2">
@@ -94,7 +94,7 @@ const Features = () => (
                         }
                     >
                         <Icon className="w-8 h-8 mb-3 text-green-600 dark:text-green-400 lg:mx-4 lg:mt-4" />
-                        <p className="text-lg font-semibold mb-2 lg:px-4">
+                        <p className="text-lg font-semibold mb-2 lg:px-4 ">
                             {title}
                         </p>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 lg:px-4 lg:pb-4">

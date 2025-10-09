@@ -1,5 +1,4 @@
 import { getPackageName } from "./projectDetector.js";
-import { CONCURRENTLY_DEPENDENCIES } from "./constants.js";
 import { readPackageJson, writePackageJson } from "./utils.js";
 import chalk from "chalk";
 import path from "path";
@@ -131,7 +130,6 @@ export async function updateConcurrentlyScripts(
     await createPnpmConfig(projectPath);
   }
 
-  await addConcurrentlyDependencies(packageJson, packageManager);
   await writePackageJson(packageJsonPath, packageJson);
 }
 
@@ -139,65 +137,25 @@ async function createPnpmConfig(projectPath) {
   const npmrcPath = path.join(projectPath, ".npmrc");
 
   const pnpmConfig = `# PNPM Configuration for MERN workspace
-# Maximum hoisting to resolve all dependency issues
-hoist-pattern[]=*
-public-hoist-pattern[]=*
-shamefully-hoist=true
+# Minimal hoisting for workspace compatibility
 strict-peer-dependencies=false
 auto-install-peers=true
 
-# Resolve dependency conflicts aggressively
-prefer-workspace-packages=false
-link-workspace-packages=false
-legacy-peer-deps=true
+# Workspace settings
+prefer-workspace-packages=true
+link-workspace-packages=true
 
-# Additional compatibility settings
-node-linker=hoisted
-symlink=false
-package-import-method=hardlink
+# Hoist only essential packages for TypeScript compatibility
+hoist-pattern[]=@types/*
+public-hoist-pattern[]=@types/*
 `;
 
   try {
     await fs.writeFile(npmrcPath, pnpmConfig, "utf8");
-    console.log(
-      chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"),
-    );
+    // console.log(
+    //   chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"),
+    // );
   } catch (error) {
-    console.warn(chalk.yellow(`⚠️  Could not create .npmrc: ${error.message}`));
+    // console.warn(chalk.yellow(`⚠️  Could not create .npmrc: ${error.message}`));
   }
-}
-
-async function addConcurrentlyDependencies(packageJson, packageManager) {
-  if (
-    !packageJson.devDependencies?.concurrently &&
-    !packageJson.dependencies?.concurrently
-  ) {
-    return;
-  }
-
-  if (!packageJson.devDependencies) {
-    packageJson.devDependencies = {};
-  }
-
-  const addedDeps = [];
-
-  for (const [depName, depVersion] of Object.entries(
-    CONCURRENTLY_DEPENDENCIES,
-  )) {
-    const missingInDev = !packageJson.devDependencies[depName];
-    const missingInProd = !packageJson.dependencies?.[depName];
-
-    if (missingInDev && missingInProd) {
-      packageJson.devDependencies[depName] = depVersion;
-      addedDeps.push(depName);
-    }
-  }
-
-  // if (addedDeps.length > 0) {
-  //   console.log(
-  //     chalk.blue(
-  //       `▸ Adding concurrently dependencies for ${packageManager.name} compatibility: ${addedDeps.join(', ')}`
-  //     )
-  //   );
-  // }
 }

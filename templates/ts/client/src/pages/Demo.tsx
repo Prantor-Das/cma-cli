@@ -22,7 +22,7 @@ export default function Demo() {
       <div className="space-y-4 max-w-5xl mx-auto flex items-center justify-between flex-col sm:flex-row ">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
-            MERN Stack Starter
+            cma-cli
           </h1>
           <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
             Instantly scaffold a production-ready MERN stack app with clean
@@ -85,7 +85,7 @@ export default function Demo() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
             Getting Started Guide
           </h2>
-          <p className="text-gray-600 dark:text-zinc-400 text-lg">
+          <p className="text-gray-600 dark:text-zinc-400">
             Follow these steps to customize your MERN stack application and make
             it your own
           </p>

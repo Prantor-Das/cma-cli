@@ -20,7 +20,9 @@ const Footer = () => {
                 <div className="flex flex-col md:flex-row justify-between gap-8 ml-0 sm:ml-8 md:ml-0">
                     <div className="flex flex-col justify-between">
                         <div>
-                            <h3 className="text-lg font-bold">cma-cli</h3>
+                            <h3 className="text-lg font-bold jetbrains-font">
+                                cma-cli
+                            </h3>
                             <p className="text-zinc-500 dark:text-zinc-400 mt-2">
                                 Scaffold your MERN stack project in seconds.
                             </p>
@@ -50,7 +52,9 @@ const Footer = () => {
                         </div>
                     </div>
                     <div className="md:text-right">
-                        <h3 className="text-lg font-bold">Quick Links</h3>
+                        <h3 className="text-lg font-bold space-font">
+                            Quick Links
+                        </h3>
                         <ul className="mt-4 space-y-2">
                             <li>
                                 <Link

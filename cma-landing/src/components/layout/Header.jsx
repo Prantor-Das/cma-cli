@@ -14,7 +14,7 @@ const Header = () => {
                         href="/"
                         className="sm:mr-10 md:mr-16 flex items-center space-x-2"
                     >
-                        <span className="font-semibold font-mono sm:text-lg">
+                        <span className="font-bold sm:text-lg jetbrains-font">
                             cma-cli
                         </span>
                     </Link>
@@ -42,7 +42,7 @@ const Header = () => {
                             className="flex bg-zinc-100/80 border border-zinc-300 dark:border-zinc-700 px-2 sm:px-4 py-2 rounded-xl items-center gap-1 text-sm  dark:bg-zinc-950 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-all duration-300"
                         >
                             <Github size={18} />
-                            <span className="hidden sm:block">GitHub</span>
+                            <span className="hidden sm:block ">GitHub</span>
                         </a>
                         <a
                             href={NPM_PACKAGE_LINK}

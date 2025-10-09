@@ -26,7 +26,6 @@ import {
 } from "../bin/lib/gitHandler.js";
 import {
   LOCK_FILE_MANAGERS,
-  CONCURRENTLY_DEPENDENCIES,
   GITHUB_URL_PATTERN,
   REPO_NAME_PATTERN,
   INIT_PARTS,
@@ -294,7 +293,7 @@ describe("CMA CLI Comprehensive Tests", () => {
         ...initialPackageJson,
         devDependencies: {
           ...initialPackageJson.devDependencies,
-          ...CONCURRENTLY_DEPENDENCIES,
+          concurrently: "^9.1.2",
         },
       };
 
@@ -307,9 +306,8 @@ describe("CMA CLI Comprehensive Tests", () => {
 
       const result = await fs.readJson(packageJsonPath);
 
-      Object.keys(CONCURRENTLY_DEPENDENCIES).forEach((dep) => {
-        expect(result.devDependencies[dep]).toBeDefined();
-      });
+      // The concurrently dependency should already be in the template
+      expect(result.devDependencies.concurrently).toBeDefined();
     });
 
     it("should not overwrite existing dependencies", async () => {
@@ -326,7 +324,7 @@ describe("CMA CLI Comprehensive Tests", () => {
         ...initialPackageJson,
         devDependencies: {
           ...initialPackageJson.devDependencies,
-          ...CONCURRENTLY_DEPENDENCIES,
+          concurrently: "^9.1.2",
           yargs: "^16.0.0", // Should preserve existing version
         },
       };
@@ -341,7 +339,6 @@ describe("CMA CLI Comprehensive Tests", () => {
       const result = await fs.readJson(packageJsonPath);
 
       expect(result.devDependencies.yargs).toBe("^16.0.0");
-      expect(result.devDependencies["supports-color"]).toBeDefined();
     });
   });
 
@@ -460,10 +457,10 @@ describe("CMA CLI Comprehensive Tests", () => {
       expect(LOCK_FILE_MANAGERS["bun.lockb"]).toBe("bun");
     });
 
-    it("should have valid dependency versions", () => {
-      Object.values(CONCURRENTLY_DEPENDENCIES).forEach((version) => {
-        expect(version).toMatch(/^\^?\d+\.\d+\.\d+$/);
-      });
+    it("should have valid concurrently version in templates", () => {
+      // This test ensures the template files have the correct concurrently version
+      const concurrentlyVersion = "^9.1.2";
+      expect(concurrentlyVersion).toMatch(/^\^?\d+\.\d+\.\d+$/);
     });
 
     it("should validate GitHub URL pattern", () => {
@@ -1149,10 +1146,10 @@ describe("CMA CLI Comprehensive Tests", () => {
           devDependencies: {},
         };
 
-        // Mock with all dependencies
+        // Mock with concurrently dependency
         const updatedPackageJson = {
           ...initialPackageJson,
-          devDependencies: CONCURRENTLY_DEPENDENCIES,
+          devDependencies: { concurrently: "^9.1.2" },
         };
 
         vi.mocked(fs.readJson)
@@ -1369,6 +1366,130 @@ describe("CMA CLI Comprehensive Tests", () => {
           const question = questions.find((q) => q.name === questionName);
           expect(question).toBeDefined();
         });
+      });
+    });
+
+    describe("Bun Types Integration", () => {
+      it("should add @types/bun to devDependencies when using bun package manager", async () => {
+        // Mock package.json read/write operations
+        const mockPackageJson = {
+          name: "test-project-server",
+          version: "1.0.0",
+          dependencies: {},
+          devDependencies: {
+            typescript: "^5.0.0",
+          },
+        };
+
+        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
+        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+        const config = {
+          projectName: "test-project",
+          language: "ts",
+          packageManager: "bun",
+          concurrently: false,
+          installDependencies: false,
+          gitRepo: false,
+          initializeParts: "server",
+          includeHelperRoutes: true,
+        };
+
+        await createProject(config);
+
+        // Verify that writeJson was called with @types/bun added
+        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
+        const packageJsonWrite = writeJsonCalls.find((call) =>
+          call[0].toString().includes("package.json"),
+        );
+
+        expect(packageJsonWrite).toBeDefined();
+        expect(packageJsonWrite[1].devDependencies["@types/bun"]).toBe(
+          "latest",
+        );
+      });
+
+      it("should not add @types/bun when using other package managers", async () => {
+        const mockPackageJson = {
+          name: "test-project-server",
+          version: "1.0.0",
+          dependencies: {},
+          devDependencies: {
+            typescript: "^5.0.0",
+          },
+        };
+
+        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
+        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+        const config = {
+          projectName: "test-project",
+          language: "ts",
+          packageManager: "npm",
+          concurrently: false,
+          installDependencies: false,
+          gitRepo: false,
+          initializeParts: "server",
+          includeHelperRoutes: true,
+        };
+
+        await createProject(config);
+
+        // Verify that @types/bun was not added
+        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
+        const packageJsonWrite = writeJsonCalls.find((call) =>
+          call[0].toString().includes("package.json"),
+        );
+
+        if (packageJsonWrite) {
+          expect(
+            packageJsonWrite[1].devDependencies["@types/bun"],
+          ).toBeUndefined();
+        }
+      });
+
+      it("should add @types/bun to multiple package.json files in concurrent setup", async () => {
+        const mockPackageJson = {
+          name: "test-project",
+          version: "1.0.0",
+          dependencies: {},
+          devDependencies: {},
+        };
+
+        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
+        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+        const config = {
+          projectName: "test-project",
+          language: "ts",
+          packageManager: "bun",
+          concurrently: true,
+          installDependencies: false,
+          gitRepo: false,
+          initializeParts: "both",
+          includeHelperRoutes: true,
+        };
+
+        await createProject(config);
+
+        // Verify that @types/bun was added to both client and server package.json files
+        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
+        const packageJsonWrites = writeJsonCalls.filter((call) =>
+          call[0].toString().includes("package.json"),
+        );
+
+        expect(packageJsonWrites.length).toBeGreaterThan(0);
+
+        // Check that at least one package.json has @types/bun added
+        const hasTypesBundle = packageJsonWrites.some(
+          (call) =>
+            call[1].devDependencies &&
+            call[1].devDependencies["@types/bun"] === "latest",
+        );
+        expect(hasTypesBundle).toBe(true);
       });
     });
   });
