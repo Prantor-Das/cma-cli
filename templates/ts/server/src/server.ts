@@ -1,99 +1,86 @@
+// Core dependencies for Express server
 import express, { type Express } from "express";
-import cors, { CorsOptions } from "cors";
+import cors from "cors";
+import type { CorsOptions } from "cors";
 import dotenv from "dotenv";
-import helmet from "helmet";
-import compression from "compression";
-import rateLimit from "express-rate-limit";
-import morgan from "morgan";
+import helmet from "helmet"; // Security headers
+import compression from "compression"; // Response compression
+import rateLimit from "express-rate-limit"; // Rate limiting
+import morgan from "morgan"; // HTTP request logger
+import cookieParser from "cookie-parser"; // Parse cookies
 
+// Application modules
 import connectDB from "./config/connectDB.js";
+import validateEnv from "./config/validateEnv.js";
 import routes from "./routes/index.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
+// Load environment variables and validate them
 dotenv.config();
-
-// Environment variable validation
-const requiredEnvVars = ["NODE_ENV"];
-requiredEnvVars.forEach((envVar) => {
-  if (!process.env[envVar]) {
-    console.warn(`⚠️  Warning: ${envVar} is not set, using default value`);
-  }
-});
+validateEnv();
 
 const app: Express = express();
-app.disable("x-powered-by");
+app.disable("x-powered-by"); // Remove Express signature for security
+
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Security middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'", "'unsafe-eval'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["'none'"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-  }),
-);
-app.use(compression());
+// Security and performance middleware
+app.use(helmet()); // Set security headers
+app.use(compression()); // Compress responses
+app.use(express.json({ limit: "1mb" })); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cookieParser()); // Parse cookies
 
-// Rate limiting
+// CORS configuration - allow specific origins
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
+
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true, // Allow cookies,
+};
+app.use(cors(corsOptions));
+
+// Rate limiting - prevent abuse
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs:
+    parseInt(process.env.RATE_LIMIT_WINDOW_MS as string) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS as string) || 100, // Max requests per window
   message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
 
-// CORS configuration
-const corsOptions: CorsOptions = {
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
-
-// Body parsing middleware with security limits
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
-
-// Logging
+// HTTP request logging
 if (NODE_ENV === "development") {
-  app.use(morgan("dev"));
+  app.use(morgan("dev")); // Concise output for development
 } else {
-  app.use(morgan("combined"));
+  app.use(morgan("combined")); // Standard Apache combined log format
 }
 
 // Health check endpoint
 app.get("/health", (_req, res) => {
-  const healthResponse = {
-    message: "Server is running !",
+  res.status(200).json({
+    message: "Server is running!",
     status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: NODE_ENV,
-  };
-
-  res.status(200).json(healthResponse);
+  });
 });
 
 // API routes
 app.use("/api", routes);
 
-// Error handling middleware
-app.use(notFound);
-app.use(errorHandler);
+// Error handling middleware (must be last)
+app.use(notFound); // Handle 404 errors
+app.use(errorHandler); // Handle all other errors
 
-async function startServer() {
+async function startServer(): Promise<void> {
   try {
     // Connect to database if MongoDB URI is provided
     if (process.env.MONGODB_URI) {
@@ -119,7 +106,10 @@ async function startServer() {
       }
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error(
+      "❌ Failed to start server:",
+      error instanceof Error ? error.message : String(error),
+    );
     process.exit(1);
   }
 }
@@ -135,6 +125,8 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}
 
 export default app;

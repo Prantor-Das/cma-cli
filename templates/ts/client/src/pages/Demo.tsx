@@ -122,22 +122,10 @@ export default function Demo() {
                   "Rename .env.example to .env and set your server configurations",
               },
               {
-                title: "Database Models",
-                code: "server/src/models/",
+                title: "Server Entry Point",
+                code: "server/server.ts",
                 description:
-                  "Create or modify models for your data structure (remove User model if not needed)",
-              },
-              {
-                title: "Remove Demo Api Routes",
-                code: "server/src/routes/users.js",
-                description:
-                  "Delete or modify sample auth and user routes. Create routes specific to your app",
-              },
-              {
-                title: "Update Route Index",
-                code: "server/src/routes/index.js",
-                description:
-                  "Register your new routes and remove unused demo route imports",
+                  "Main Express file that initializes the backend, connects to MongoDB, and registers routes and middleware.",
               },
             ]}
           />

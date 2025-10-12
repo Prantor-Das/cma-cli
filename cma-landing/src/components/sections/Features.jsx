@@ -1,12 +1,19 @@
 "use client";
-import { Terminal, Code, Layers, Moon, ServerCog, Rocket } from "lucide-react";
+import {
+    Terminal,
+    Code,
+    Layers,
+    GitBranch,
+    Package,
+    ShieldCheck,
+} from "lucide-react";
 import { CONCURRENTLY_IMG, MERN_IMG } from "@/context/constants";
 
 const features = [
     {
-        title: "Interactive CLI",
+        title: "Smart Interactive CLI",
         description:
-            "Command-line interface for guided and customizable app scaffolding.",
+            "Intuitive and adaptive command-line interface guiding you through setup, tech choices, and project structure, all in one smooth flow.",
         icon: Terminal,
         gridClass: "span-col-2",
     },
@@ -34,24 +41,24 @@ const features = [
         image: CONCURRENTLY_IMG,
     },
     {
-        title: "Example API Endpoints",
+        title: "Flexible Project Setup",
         description:
-            "Ready-to-use API routes demonstrating best practices and integration.",
-        icon: ServerCog,
+            "Select between client-only, server-only, or full-stack setup with automatic Git initialization and environment scaffolding.",
+        icon: GitBranch,
         gridClass: "span-col-2",
     },
     {
-        title: "Pre-configured Dark Mode",
+        title: "Multi-Package Manager Support",
         description:
-            "Built-in dark theme support for improved usability and aesthetics.",
-        icon: Moon,
+            "Optimized installation with support for npm, pnpm, bun and yarn, choose your favorite and save time with faster dependency setup.",
+        icon: Package,
         gridClass: "span-col-1",
     },
     {
-        title: "Ready for Production",
+        title: "Enhanced Middleware & Security",
         description:
-            "Optimized and secure setup with deployment best practices included.",
-        icon: Rocket,
+            "Pre-configured with Helmet, CORS, rate limiting, and structured middleware setup for production-grade API security.",
+        icon: ShieldCheck,
         gridClass: "span-col-1",
     },
 ];

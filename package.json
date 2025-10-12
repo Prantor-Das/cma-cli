@@ -8,10 +8,10 @@
     "cma-cli": "bin/index.js"
   },
   "scripts": {
-    "test": "vitest --run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest --coverage",
-    "test:ui": "vitest --ui",
+    "test": "vitest --run tests/",
+    "test:watch": "vitest tests/",
+    "test:coverage": "vitest --coverage tests/",
+    "test:ui": "vitest --ui tests/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "node scripts/clean.js",

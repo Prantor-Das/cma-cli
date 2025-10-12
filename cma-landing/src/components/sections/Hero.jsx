@@ -7,7 +7,7 @@ const Hero = () => {
         <div className="max-h-screen w-full relative">
             {/* Dashed Top Fade Grid */}
             <div
-                className="absolute -inset-2 z-0 max-h-screen block dark:hidden"
+                className="absolute -inset-2 z-0 max-h-screen block dark:hidden lg:hidden"
                 style={{
                     backgroundImage: `
         linear-gradient(to right, #C9C9C9 1px, transparent 1px),
@@ -55,7 +55,7 @@ const Hero = () => {
             />
 
             <div
-                className="absolute -inset-2 z-0 max-h-screen hidden dark:block"
+                className="absolute -inset-2 z-0 max-h-screen hidden dark:block lg:dark:hidden"
                 style={{
                     backgroundImage: `
       linear-gradient(to right, #323232 1px, transparent 1px),
@@ -117,20 +117,20 @@ const Hero = () => {
                 <div className="mt-12 w-full max-w-sm md:max-w-lg lg:max-w-xl">
                     <CodeBlock code="npx cma-cli" />
                 </div>
-                {/* <Image
-                src={CMA_IMG}
-                alt="Hero"
-                width={500}
-                height={500}
-                className="mix-blend-difference absolute -rotate-90 -left-100 md:-left-80 lg:-left-45 xl:scale-110 opacity-50"
-            />
-            <Image
-                src={CMA_IMG}
-                alt="Hero"
-                width={500}
-                height={500}
-                className="absolute rotate-90 -right-100 md:-right-80 lg:-right-45 xl:scale-110 mix-blend-difference opacity-50"
-            /> */}
+                <Image
+                    src={CMA_IMG}
+                    alt="Hero"
+                    width={500}
+                    height={500}
+                    className="mix-blend-difference absolute -rotate-90 -left-100 md:-left-80 lg:-left-45 xl:scale-110 opacity-50"
+                />
+                <Image
+                    src={CMA_IMG}
+                    alt="Hero"
+                    width={500}
+                    height={500}
+                    className="absolute rotate-90 -right-100 md:-right-80 lg:-right-45 xl:scale-110 mix-blend-difference opacity-50"
+                />
             </section>
         </div>
     );

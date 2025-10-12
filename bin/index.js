@@ -118,12 +118,8 @@ async function displayNextSteps(config, packageManager, needsShellSetup) {
     ? `${fullPath} ${packageManager.installCmd}`
     : getInstallCommand(packageManager);
   const devCmd = useFullPath
-    ? `${fullPath} run ${
-        config.language === "TypeScript"
-          ? "build && " + fullPath + " run dev"
-          : "dev"
-      }`
-    : getDevCommand(packageManager, config.language === "TypeScript");
+    ? `${fullPath} run dev`
+    : getDevCommand(packageManager);
   const startCmd = useFullPath
     ? `${fullPath} run start`
     : getStartCommand(packageManager);

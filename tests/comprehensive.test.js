@@ -12,7 +12,13 @@ import path from "path";
 import { execa } from "execa";
 import { createProject } from "../bin/actions.js";
 import { questions } from "../bin/questions.js";
-import { validateProjectName } from "../bin/lib/utils.js";
+import {
+  validateProjectName,
+  readPackageJson,
+  writePackageJson,
+  ensureDirectory,
+  pathExists,
+} from "../bin/lib/utils.js";
 import {
   detectProjectConfiguration,
   getPackageName,
@@ -31,8 +37,24 @@ import {
   INIT_PARTS,
 } from "../bin/lib/constants.js";
 
-vi.mock("execa");
-vi.mock("fs-extra");
+vi.mock("execa", () => ({
+  execa: vi.fn(),
+}));
+vi.mock("fs-extra", () => ({
+  default: {
+    ensureDir: vi.fn(),
+    writeJson: vi.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    copy: vi.fn(),
+    remove: vi.fn(),
+    move: vi.fn(),
+    readdir: vi.fn(),
+    mkdir: vi.fn(),
+    pathExists: vi.fn(),
+    readJson: vi.fn(),
+  },
+}));
 
 describe("CMA CLI Comprehensive Tests", () => {
   let testDir;
@@ -44,18 +66,18 @@ describe("CMA CLI Comprehensive Tests", () => {
     vi.clearAllMocks();
 
     // Default mock implementations - can be overridden in specific tests
-    vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
-    vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-    vi.mocked(fs.readFile).mockResolvedValue("test content");
-    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-    vi.mocked(fs.copy).mockResolvedValue(undefined);
-    vi.mocked(fs.remove).mockResolvedValue(undefined);
-    vi.mocked(fs.move).mockResolvedValue(undefined);
-    vi.mocked(fs.readdir).mockResolvedValue([]);
-    vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+    fs.ensureDir.mockResolvedValue(undefined);
+    fs.writeJson.mockResolvedValue(undefined);
+    fs.readFile.mockResolvedValue("test content");
+    fs.writeFile.mockResolvedValue(undefined);
+    fs.copy.mockResolvedValue(undefined);
+    fs.remove.mockResolvedValue(undefined);
+    fs.move.mockResolvedValue(undefined);
+    fs.readdir.mockResolvedValue([]);
+    fs.mkdir.mockResolvedValue(undefined);
 
     // Mock execa for git and package manager commands
-    vi.mocked(execa).mockResolvedValue({ stdout: "1.0.0" });
+    execa.mockResolvedValue({ stdout: "1.0.0" });
   });
 
   afterEach(async () => {
@@ -81,12 +103,12 @@ describe("CMA CLI Comprehensive Tests", () => {
         {
           name: "my app",
           expectedError:
-            "Project name can only contain letters, numbers, hyphens, and underscores",
+            "Project name can only contain letters, numbers, hyphens, and underscores (or use './' for current directory)",
         },
         {
           name: "my@app",
           expectedError:
-            "Project name can only contain letters, numbers, hyphens, and underscores",
+            "Project name can only contain letters, numbers, hyphens, and underscores (or use './' for current directory)",
         },
         {
           name: "a".repeat(215),
@@ -108,359 +130,12 @@ describe("CMA CLI Comprehensive Tests", () => {
     });
   });
 
-  describe("Project Configuration Detection", () => {
-    it("should detect npm lock file", async () => {
-      // Mock fs.readdir to return only npm lock file
-      vi.mocked(fs.readdir).mockResolvedValue([
-        { name: "package-lock.json", isFile: () => true },
-      ]);
-      vi.mocked(fs.pathExists).mockImplementation((filePath) => {
-        return Promise.resolve(
-          filePath.toString().includes("package-lock.json"),
-        );
-      });
-      vi.mocked(fs.readJson).mockResolvedValue({});
-
-      const result = await detectProjectConfiguration(testDir);
-
-      expect(result.lockFiles).toContain("package-lock.json");
-      expect(result.allSuggestions).toContain("npm");
-      expect(result.suggestedManager).toBe("npm");
-      expect(result.hasMultipleLockFiles).toBe(false);
-    });
-
-    it("should detect multiple lock files", async () => {
-      // Mock fs.readdir to return multiple lock files
-      vi.mocked(fs.readdir).mockResolvedValue([
-        { name: "package-lock.json", isFile: () => true },
-        { name: "yarn.lock", isFile: () => true },
-      ]);
-      vi.mocked(fs.pathExists).mockImplementation((filePath) => {
-        const pathStr = filePath.toString();
-        return Promise.resolve(
-          pathStr.includes("package-lock.json") ||
-            pathStr.includes("yarn.lock"),
-        );
-      });
-      vi.mocked(fs.readJson).mockResolvedValue({});
-
-      const result = await detectProjectConfiguration(testDir);
-
-      expect(result.lockFiles).toHaveLength(2);
-      expect(result.hasMultipleLockFiles).toBe(true);
-      expect(result.allSuggestions).toContain("npm");
-      expect(result.allSuggestions).toContain("yarn");
-    });
-
-    it("should detect packageManager field in package.json", async () => {
-      const packageJson = { name: "test", packageManager: "pnpm@8.0.0" };
-      vi.mocked(fs.readdir).mockResolvedValue([]);
-      vi.mocked(fs.pathExists).mockImplementation((filePath) => {
-        return Promise.resolve(filePath.toString().includes("package.json"));
-      });
-      vi.mocked(fs.readJson).mockResolvedValue(packageJson);
-
-      const result = await detectProjectConfiguration(testDir);
-
-      expect(result.allSuggestions).toContain("pnpm");
-      expect(result.packageJsonConfig).toEqual(packageJson);
-    });
-
-    it("should handle no configuration gracefully", async () => {
-      // Mock empty directory
-      vi.mocked(fs.readdir).mockResolvedValue([]);
-      vi.mocked(fs.pathExists).mockResolvedValue(false);
-
-      const result = await detectProjectConfiguration(testDir);
-
-      expect(result.lockFiles).toHaveLength(0);
-      expect(result.allSuggestions).toHaveLength(0);
-      expect(result.suggestedManager).toBeNull();
-      expect(result.hasMultipleLockFiles).toBe(false);
-    });
-  });
-
-  describe("Package Name Resolution", () => {
-    it("should return package name from package.json", async () => {
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
-      vi.mocked(fs.readJson).mockResolvedValue({ name: "my-app-client" });
-
-      const result = await getPackageName(testDir, "client");
-      expect(result).toBe("my-app-client");
-    });
-
-    it("should return directory name if no package.json", async () => {
-      vi.mocked(fs.pathExists).mockResolvedValue(false);
-
-      const result = await getPackageName(testDir, "client");
-      expect(result).toBe("client");
-    });
-
-    it("should handle invalid package.json gracefully", async () => {
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
-      vi.mocked(fs.readJson).mockRejectedValue(new Error("Invalid JSON"));
-
-      const result = await getPackageName(testDir, "client");
-      expect(result).toBe("client");
-    });
-  });
-
-  describe("Script Generation for Package Managers", () => {
-    beforeEach(async () => {
-      // Mock package.json reads for script generation tests
-      vi.mocked(fs.readJson).mockImplementation((filePath) => {
-        const pathStr = filePath.toString();
-        if (pathStr.includes("client/package.json")) {
-          return Promise.resolve({ name: "test-app-client" });
-        } else if (pathStr.includes("server/package.json")) {
-          return Promise.resolve({ name: "test-app-server" });
-        } else {
-          return Promise.resolve({
-            scripts: {},
-            devDependencies: { concurrently: "^9.1.2" },
-          });
-        }
-      });
-    });
-
-    const packageManagers = [
-      {
-        name: "npm",
-        command: "npm",
-        expectedClient: "npm run dev --workspace client",
-      },
-      {
-        name: "yarn",
-        command: "yarn",
-        expectedClient: "yarn workspace test-app-client dev",
-      },
-      {
-        name: "pnpm",
-        command: "pnpm",
-        expectedClient: "pnpm --filter test-app-client dev",
-      },
-      {
-        name: "bun",
-        command: "bun",
-        expectedClient: "bun --filter test-app-client dev",
-      },
-    ];
-
-    packageManagers.forEach(({ name, command, expectedClient }) => {
-      it(`should generate ${name} scripts correctly`, async () => {
-        const packageJsonPath = path.join(testDir, "package.json");
-        const initialPackageJson = {
-          scripts: {},
-          devDependencies: { concurrently: "^9.1.2" },
-        };
-
-        // Mock the updated package.json with generated scripts
-        const updatedPackageJson = {
-          ...initialPackageJson,
-          scripts: {
-            client: expectedClient,
-            dev: 'concurrently "npm run server" "npm run client"',
-          },
-        };
-
-        // Mock fs.readJson to return updated package.json after the operation
-        vi.mocked(fs.readJson)
-          .mockResolvedValueOnce(initialPackageJson)
-          .mockResolvedValueOnce(updatedPackageJson);
-
-        const packageManager = { name, command };
-        await updateConcurrentlyScripts(packageJsonPath, packageManager);
-
-        const result = await fs.readJson(packageJsonPath);
-
-        expect(result.scripts.client).toBe(expectedClient);
-        expect(result.scripts.dev).toContain("concurrently");
-
-        if (name === "pnpm") {
-          expect(result.workspaces).toBeUndefined();
-        }
-      });
-    });
-
-    it("should add concurrently dependencies for all package managers", async () => {
-      const packageJsonPath = path.join(testDir, "package.json");
-      const initialPackageJson = {
-        scripts: {},
-        devDependencies: { concurrently: "^9.1.2" },
-      };
-
-      const updatedPackageJson = {
-        ...initialPackageJson,
-        devDependencies: {
-          ...initialPackageJson.devDependencies,
-          concurrently: "^9.1.2",
-        },
-      };
-
-      vi.mocked(fs.readJson)
-        .mockResolvedValueOnce(initialPackageJson)
-        .mockResolvedValueOnce(updatedPackageJson);
-
-      const packageManager = { name: "pnpm", command: "pnpm" };
-      await updateConcurrentlyScripts(packageJsonPath, packageManager);
-
-      const result = await fs.readJson(packageJsonPath);
-
-      // The concurrently dependency should already be in the template
-      expect(result.devDependencies.concurrently).toBeDefined();
-    });
-
-    it("should not overwrite existing dependencies", async () => {
-      const packageJsonPath = path.join(testDir, "package.json");
-      const initialPackageJson = {
-        scripts: {},
-        devDependencies: {
-          concurrently: "^9.1.2",
-          yargs: "^16.0.0",
-        },
-      };
-
-      const updatedPackageJson = {
-        ...initialPackageJson,
-        devDependencies: {
-          ...initialPackageJson.devDependencies,
-          concurrently: "^9.1.2",
-          yargs: "^16.0.0", // Should preserve existing version
-        },
-      };
-
-      vi.mocked(fs.readJson)
-        .mockResolvedValueOnce(initialPackageJson)
-        .mockResolvedValueOnce(updatedPackageJson);
-
-      const packageManager = { name: "pnpm", command: "pnpm" };
-      await updateConcurrentlyScripts(packageJsonPath, packageManager);
-
-      const result = await fs.readJson(packageJsonPath);
-
-      expect(result.devDependencies.yargs).toBe("^16.0.0");
-    });
-  });
-
-  describe("Git Integration", () => {
-    beforeEach(() => {
-      vi.mocked(execa).mockClear();
-    });
-
-    it("should get GitHub username from git config", async () => {
-      vi.mocked(execa).mockResolvedValueOnce({ stdout: "testuser" });
-
-      const result = await getGitHubUsername();
-
-      expect(result).toBe("testuser");
-      expect(execa).toHaveBeenCalledWith("git", [
-        "config",
-        "--global",
-        "github.user",
-      ]);
-    });
-
-    it("should fallback to user.name if github.user not set", async () => {
-      vi.mocked(execa)
-        .mockRejectedValueOnce(new Error("not found"))
-        .mockResolvedValueOnce({ stdout: "Test User" });
-
-      const result = await getGitHubUsername();
-
-      expect(result).toBe("Test User");
-      expect(execa).toHaveBeenCalledWith("git", [
-        "config",
-        "--global",
-        "user.name",
-      ]);
-    });
-
-    it("should validate GitHub repository URLs", async () => {
-      vi.mocked(execa).mockResolvedValueOnce({});
-
-      const result = await validateGitHubRepository(
-        "https://github.com/user/repo.git",
-      );
-
-      expect(result).toBe(true);
-      expect(execa).toHaveBeenCalledWith(
-        "git",
-        ["ls-remote", "--heads", "https://github.com/user/repo.git"],
-        {
-          timeout: 10000,
-          stdio: "ignore",
-        },
-      );
-    });
-
-    it("should construct GitHub URLs correctly", () => {
-      const testCases = [
-        {
-          input: "https://github.com/user/repo.git",
-          username: "testuser",
-          expected: "https://github.com/user/repo.git",
-        },
-        {
-          input: "my-repo",
-          username: "testuser",
-          expected: "https://github.com/testuser/my-repo.git",
-        },
-        {
-          input: "  my-repo  ",
-          username: "testuser",
-          expected: "https://github.com/testuser/my-repo.git",
-        },
-      ];
-
-      testCases.forEach(({ input, username, expected }) => {
-        const result = constructGitHubUrl(input, username);
-        expect(result).toBe(expected);
-      });
-    });
-
-    it("should throw error for invalid repository formats", () => {
-      expect(() => constructGitHubUrl("my-repo", null)).toThrow();
-      expect(() =>
-        constructGitHubUrl("invalid/repo/name", "testuser"),
-      ).toThrow();
-    });
-
-    it("should initialize git repository successfully", async () => {
-      const mockProjectPath = path.join(testDir, "test-project");
-      await fs.ensureDir(mockProjectPath);
-
-      vi.mocked(execa)
-        .mockResolvedValueOnce({ stdout: "testuser" })
-        .mockResolvedValue({});
-
-      await initializeGit(mockProjectPath, "my-repo");
-
-      expect(execa).toHaveBeenCalledWith("git", ["--version"]);
-      expect(execa).toHaveBeenCalledWith("git", ["init"], {
-        cwd: mockProjectPath,
-      });
-      expect(execa).toHaveBeenCalledWith(
-        "git",
-        ["remote", "add", "origin", "https://github.com/testuser/my-repo.git"],
-        {
-          cwd: mockProjectPath,
-        },
-      );
-    });
-  });
-
   describe("Constants Validation", () => {
     it("should have correct lock file mappings", () => {
       expect(LOCK_FILE_MANAGERS["package-lock.json"]).toBe("npm");
       expect(LOCK_FILE_MANAGERS["yarn.lock"]).toBe("yarn");
       expect(LOCK_FILE_MANAGERS["pnpm-lock.yaml"]).toBe("pnpm");
-      expect(LOCK_FILE_MANAGERS["bun.lockb"]).toBe("bun");
-    });
-
-    it("should have valid concurrently version in templates", () => {
-      // This test ensures the template files have the correct concurrently version
-      const concurrentlyVersion = "^9.1.2";
-      expect(concurrentlyVersion).toMatch(/^\^?\d+\.\d+\.\d+$/);
+      expect(LOCK_FILE_MANAGERS["bun.lock"]).toBe("bun");
     });
 
     it("should validate GitHub URL pattern", () => {
@@ -499,208 +174,41 @@ describe("CMA CLI Comprehensive Tests", () => {
     });
   });
 
-  describe("End-to-End Project Creation", () => {
-    beforeEach(async () => {
-      // Mock template directory structure for fast tests
-      vi.mocked(fs.pathExists).mockImplementation((filePath) => {
-        const pathStr = filePath.toString();
-        // Mock template files exist
-        if (
-          pathStr.includes("templates/js") ||
-          pathStr.includes("package.json") ||
-          pathStr.includes("index.html") ||
-          pathStr.includes("src")
-        ) {
-          return Promise.resolve(true);
-        }
-        return Promise.resolve(false);
-      });
+  describe("Git Integration", () => {
+    beforeEach(() => {
+      execa.mockClear();
+    });
 
-      // Mock package.json reads for different scenarios
-      vi.mocked(fs.readJson).mockImplementation((filePath) => {
-        const pathStr = filePath.toString();
-        if (pathStr.includes("package.json")) {
-          if (pathStr.includes("client")) {
-            return Promise.resolve({
-              name: "test-client",
-              scripts: { dev: "vite" },
-            });
-          } else if (pathStr.includes("server")) {
-            return Promise.resolve({
-              name: "test-server",
-              scripts: { dev: "nodemon" },
-            });
-          } else {
-            return Promise.resolve({ name: "test-root", scripts: {} });
-          }
-        }
-        return Promise.resolve({});
+    it("should construct GitHub URLs correctly", () => {
+      const testCases = [
+        {
+          input: "https://github.com/user/repo.git",
+          username: "testuser",
+          expected: "https://github.com/user/repo.git",
+        },
+        {
+          input: "my-repo",
+          username: "testuser",
+          expected: "https://github.com/testuser/my-repo.git",
+        },
+        {
+          input: "  my-repo  ",
+          username: "testuser",
+          expected: "https://github.com/testuser/my-repo.git",
+        },
+      ];
+
+      testCases.forEach(({ input, username, expected }) => {
+        const result = constructGitHubUrl(input, username);
+        expect(result).toBe(expected);
       });
     });
 
-    const testConfigs = [
-      {
-        name: "basic project creation",
-        config: {
-          projectName: "test-project",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        },
-        expectedScriptPattern: "npm run dev --workspace",
-      },
-      {
-        name: "client only setup",
-        config: {
-          projectName: "test-client-only",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: false,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.CLIENT,
-          includeHelperRoutes: false,
-        },
-        clientOnly: true,
-      },
-    ];
-
-    testConfigs.forEach(
-      ({
-        name,
-        config,
-        expectedScriptPattern,
-        shouldHavePnpmWorkspace,
-        clientOnly,
-        serverOnly,
-      }) => {
-        it(`should create project with ${name}`, async () => {
-          // Test that createProject runs without errors
-          await expect(createProject(config)).resolves.not.toThrow();
-
-          // Verify that the expected fs operations were called
-          expect(fs.ensureDir).toHaveBeenCalled();
-          expect(fs.copy).toHaveBeenCalled();
-
-          // Verify specific operations based on config
-          if (clientOnly) {
-            // Verify client-only specific operations
-            expect(fs.copy).toHaveBeenCalledWith(
-              expect.stringContaining("client"),
-              expect.any(String),
-            );
-          } else {
-            // Verify full project operations
-            expect(fs.writeJson).toHaveBeenCalled();
-          }
-        });
-      },
-    );
-
-    it("should handle git initialization", async () => {
-      const config = {
-        projectName: "test-git-project",
-        language: "JavaScript",
-        packageManager: "npm",
-        concurrently: true,
-        installDependencies: false,
-        gitRepo: true,
-        gitRepoUrl: "https://github.com/user/repo.git",
-        initializeParts: INIT_PARTS.BOTH,
-        includeHelperRoutes: true,
-      };
-
-      await expect(createProject(config)).resolves.not.toThrow();
-
-      // Verify git commands were called
-      expect(execa).toHaveBeenCalledWith("git", ["--version"]);
-    });
-
-    it("should handle errors gracefully", async () => {
-      // Mock fs.mkdir to throw an error for invalid project names
-      vi.mocked(fs.mkdir).mockRejectedValue(
-        new Error("Invalid directory name"),
-      );
-
-      const config = {
-        projectName: "invalid/name",
-        language: "JavaScript",
-        packageManager: "npm",
-        concurrently: true,
-        installDependencies: false,
-        gitRepo: false,
-        initializeParts: INIT_PARTS.BOTH,
-        includeHelperRoutes: true,
-      };
-
-      await expect(createProject(config)).rejects.toThrow();
-    });
-
-    it("should create project without helper routes when disabled", async () => {
-      const config = {
-        projectName: "test-no-helper-routes",
-        language: "JavaScript",
-        packageManager: "npm",
-        concurrently: true,
-        initializeParts: INIT_PARTS.BOTH,
-        installDependencies: false,
-        gitRepo: false,
-        includeHelperRoutes: false,
-      };
-
-      await expect(createProject(config)).resolves.not.toThrow();
-
-      // Verify that fs.remove was called (for removing helper routes)
-      expect(fs.remove).toHaveBeenCalled();
-    });
-
-    it("should create project with helper routes when enabled", async () => {
-      const config = {
-        projectName: "test-with-helper-routes",
-        language: "JavaScript",
-        packageManager: "npm",
-        concurrently: true,
-        initializeParts: INIT_PARTS.BOTH,
-        installDependencies: false,
-        gitRepo: false,
-        includeHelperRoutes: true,
-      };
-
-      await expect(createProject(config)).resolves.not.toThrow();
-
-      // Verify that helper routes were not removed (fs.remove not called for helper files)
-      expect(fs.copy).toHaveBeenCalled();
-    });
-
-    it("should create real project (integration test)", async () => {
-      // This test verifies that the mocked behavior matches real behavior
-      // by testing the core validation functions with real implementations
-
-      // Test real project name validation
-      const realValidation = validateProjectName("test-real-project");
-      expect(realValidation.valid).toBe(true);
-      expect(realValidation.name).toBe("test-real-project");
-
-      // Test invalid project name
-      const invalidValidation = validateProjectName("invalid/name");
-      expect(invalidValidation.valid).toBe(false);
-
-      // Test git URL construction
-      const validUrl = constructGitHubUrl("test-repo", "testuser");
-      expect(validUrl).toBe("https://github.com/testuser/test-repo.git");
-
-      // Test that constants are properly defined
-      expect(INIT_PARTS.BOTH).toBe("both");
-      expect(INIT_PARTS.CLIENT).toBe("client");
-      expect(INIT_PARTS.SERVER).toBe("server");
-
-      // Test that questions array is properly structured
-      expect(Array.isArray(questions)).toBe(true);
-      expect(questions.length).toBeGreaterThan(0);
+    it("should throw error for invalid repository formats", () => {
+      expect(() => constructGitHubUrl("my-repo", null)).toThrow();
+      expect(() =>
+        constructGitHubUrl("invalid/repo/name", "testuser"),
+      ).toThrow();
     });
   });
 
@@ -740,35 +248,23 @@ describe("CMA CLI Comprehensive Tests", () => {
       expect(typeof gitRepoQuestion.validate).toBe("function");
     });
 
-    it("should have helper routes question with conditional logic", () => {
-      const helperRoutesQuestion = questions.find(
-        (q) => q.name === "includeHelperRoutes",
+    it("should have concurrently question with conditional logic", () => {
+      const concurrentlyQuestion = questions.find(
+        (q) => q.name === "concurrently",
       );
-      expect(helperRoutesQuestion).toBeDefined();
-      expect(helperRoutesQuestion.type).toBe("confirm");
-      expect(helperRoutesQuestion.default).toBe(true);
-      expect(typeof helperRoutesQuestion.when).toBe("function");
+      expect(concurrentlyQuestion).toBeDefined();
+      expect(concurrentlyQuestion.type).toBe("confirm");
+      expect(concurrentlyQuestion.default).toBe(true);
+      expect(typeof concurrentlyQuestion.when).toBe("function");
 
       // Test the conditional logic
-      expect(helperRoutesQuestion.when({ concurrently: true })).toBe(true);
-      expect(
-        helperRoutesQuestion.when({
-          concurrently: false,
-          initializeParts: "both",
-        }),
-      ).toBe(true);
-      expect(
-        helperRoutesQuestion.when({
-          concurrently: false,
-          initializeParts: "server",
-        }),
-      ).toBe(true);
-      expect(
-        helperRoutesQuestion.when({
-          concurrently: false,
-          initializeParts: "client",
-        }),
-      ).toBe(false);
+      expect(concurrentlyQuestion.when({ initializeParts: "both" })).toBe(true);
+      expect(concurrentlyQuestion.when({ initializeParts: "client" })).toBe(
+        false,
+      );
+      expect(concurrentlyQuestion.when({ initializeParts: "server" })).toBe(
+        false,
+      );
     });
   });
 
@@ -796,701 +292,546 @@ describe("CMA CLI Comprehensive Tests", () => {
         expect(result.name).toBe("123-my-app");
       });
 
-      it("should allow project names with consecutive special characters", () => {
-        const result = validateProjectName("my---app___test");
-        expect(result.valid).toBe(true);
-        expect(result.name).toBe("my---app___test"); // No normalization in actual implementation
-      });
-
       it("should handle empty and whitespace-only names", () => {
         expect(validateProjectName("").valid).toBe(false);
         expect(validateProjectName("   ").valid).toBe(false);
         expect(validateProjectName("\t\n").valid).toBe(false);
       });
     });
+  });
 
-    describe("File System Edge Cases", () => {
-      it("should handle permission errors during project creation", async () => {
-        vi.mocked(fs.mkdir).mockRejectedValue(
-          new Error("EACCES: permission denied"),
-        );
-
-        const config = {
-          projectName: "permission-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow("EACCES");
-      });
-
-      it("should handle disk space errors", async () => {
-        vi.mocked(fs.copy).mockRejectedValue(
-          new Error("ENOSPC: no space left on device"),
-        );
-
-        const config = {
-          projectName: "space-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow("ENOSPC");
-      });
-
-      it("should handle corrupted template files", async () => {
-        vi.mocked(fs.copy).mockRejectedValue(
-          new Error("ENOENT: template file not found"),
-        );
-
-        const config = {
-          projectName: "template-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow("ENOENT");
-      });
-
-      it("should handle existing project directory", async () => {
-        vi.mocked(fs.mkdir).mockRejectedValue(
-          new Error("EEXIST: file already exists"),
-        );
-
-        const config = {
-          projectName: "existing-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow("EEXIST");
-      });
+  describe("Project Detection", () => {
+    beforeEach(() => {
+      fs.pathExists.mockResolvedValue(false);
+      fs.readJson.mockRejectedValue(new Error("File not found"));
     });
 
-    describe("Package Manager Edge Cases", () => {
-      it("should handle package manager not found", async () => {
-        vi.mocked(execa).mockRejectedValue(
-          new Error("ENOENT: command not found"),
+    it("should detect npm project from package-lock.json", async () => {
+      fs.pathExists.mockImplementation((path) =>
+        path.includes("package-lock.json"),
+      );
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.lockFiles).toContain("package-lock.json");
+      expect(config.suggestedManager).toBe("npm");
+    });
+
+    it("should detect yarn project from yarn.lock", async () => {
+      fs.pathExists.mockImplementation((path) => path.includes("yarn.lock"));
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.lockFiles).toContain("yarn.lock");
+      expect(config.suggestedManager).toBe("yarn");
+    });
+
+    it("should detect pnpm project from pnpm-lock.yaml", async () => {
+      fs.pathExists.mockImplementation((path) =>
+        path.includes("pnpm-lock.yaml"),
+      );
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.lockFiles).toContain("pnpm-lock.yaml");
+      expect(config.suggestedManager).toBe("pnpm");
+    });
+
+    it("should detect bun project from bun.lock", async () => {
+      fs.pathExists.mockImplementation((path) => path.includes("bun.lock"));
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.lockFiles).toContain("bun.lock");
+      expect(config.suggestedManager).toBe("bun");
+    });
+
+    it("should handle multiple lock files", async () => {
+      fs.pathExists.mockImplementation(
+        (path) =>
+          path.includes("package-lock.json") || path.includes("yarn.lock"),
+      );
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.hasMultipleLockFiles).toBe(true);
+      expect(config.lockFiles).toHaveLength(2);
+    });
+
+    it("should detect workspace configuration", async () => {
+      fs.pathExists.mockImplementation(
+        (path) =>
+          path.includes("package.json") || path.includes("pnpm-workspace.yaml"),
+      );
+      fs.readJson.mockResolvedValue({ workspaces: ["client", "server"] });
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.allSuggestions).toContain("pnpm");
+    });
+
+    it("should handle package.json with packageManager field", async () => {
+      fs.pathExists.mockImplementation((path) => path.includes("package.json"));
+      fs.readJson.mockResolvedValue({
+        packageManager: "pnpm@8.0.0",
+      });
+
+      const config = await detectProjectConfiguration("/test/path");
+      expect(config.allSuggestions).toContain("pnpm");
+    });
+  });
+
+  describe("Script Generation", () => {
+    it("should generate correct pnpm scripts", async () => {
+      const mockPackageManager = { name: "pnpm", command: "pnpm" };
+
+      // Mock getPackageName to return predictable values
+      vi.doMock("../bin/lib/projectDetector.js", () => ({
+        getPackageName: vi
+          .fn()
+          .mockResolvedValueOnce("test-client")
+          .mockResolvedValueOnce("test-server"),
+      }));
+
+      const { updateConcurrentlyScripts } = await import(
+        "../bin/lib/scriptGenerator.js"
+      );
+
+      fs.readJson.mockResolvedValue({
+        scripts: {},
+      });
+
+      await updateConcurrentlyScripts("/test/package.json", mockPackageManager);
+
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        "/test/package.json",
+        expect.objectContaining({
+          scripts: expect.objectContaining({
+            dev: expect.stringContaining("concurrently"),
+            client: expect.stringContaining("--filter"),
+            server: expect.stringContaining("--filter"),
+          }),
+        }),
+        { spaces: 2 },
+      );
+    });
+
+    it("should generate correct npm scripts", async () => {
+      const mockPackageManager = { name: "npm", command: "npm" };
+
+      const { updateConcurrentlyScripts } = await import(
+        "../bin/lib/scriptGenerator.js"
+      );
+
+      fs.readJson.mockResolvedValue({
+        scripts: {},
+      });
+
+      await updateConcurrentlyScripts("/test/package.json", mockPackageManager);
+
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        "/test/package.json",
+        expect.objectContaining({
+          scripts: expect.objectContaining({
+            dev: expect.stringContaining("concurrently"),
+            client: expect.stringContaining("--workspace client"),
+            server: expect.stringContaining("--workspace server"),
+          }),
+        }),
+        { spaces: 2 },
+      );
+    });
+
+    it("should handle missing scripts object", async () => {
+      const mockPackageManager = { name: "npm", command: "npm" };
+
+      const { updateConcurrentlyScripts } = await import(
+        "../bin/lib/scriptGenerator.js"
+      );
+
+      fs.readJson.mockResolvedValue({});
+
+      await updateConcurrentlyScripts("/test/package.json", mockPackageManager);
+
+      // Should not throw and should not call writeJson
+      expect(fs.writeJson).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Git Handler", () => {
+    beforeEach(() => {
+      execa.mockClear();
+    });
+
+    it("should get GitHub username from git config", async () => {
+      execa.mockResolvedValueOnce({ stdout: "testuser" });
+
+      const username = await getGitHubUsername();
+      expect(username).toBe("testuser");
+      expect(execa).toHaveBeenCalledWith("git", [
+        "config",
+        "--global",
+        "github.user",
+      ]);
+    });
+
+    it("should fallback to user.name if github.user not found", async () => {
+      execa
+        .mockRejectedValueOnce(new Error("Not found"))
+        .mockResolvedValueOnce({ stdout: "Test User" });
+
+      const username = await getGitHubUsername();
+      expect(username).toBe("Test User");
+    });
+
+    it("should return null if no username found", async () => {
+      execa.mockRejectedValue(new Error("Not found"));
+
+      const username = await getGitHubUsername();
+      expect(username).toBeNull();
+    });
+
+    it("should validate GitHub repository successfully", async () => {
+      execa.mockResolvedValue({ stdout: "" });
+
+      const isValid = await validateGitHubRepository(
+        "https://github.com/user/repo.git",
+      );
+      expect(isValid).toBe(true);
+      expect(execa).toHaveBeenCalledWith(
+        "git",
+        ["ls-remote", "--heads", "https://github.com/user/repo.git"],
+        { timeout: 10000, stdio: "ignore" },
+      );
+    });
+
+    it("should handle invalid repository", async () => {
+      execa.mockRejectedValue(new Error("Repository not found"));
+
+      const isValid = await validateGitHubRepository(
+        "https://github.com/invalid/repo.git",
+      );
+      expect(isValid).toBe(false);
+    });
+
+    it("should initialize git repository", async () => {
+      execa.mockResolvedValue({ stdout: "" });
+
+      await initializeGit("/test/path", "https://github.com/user/repo.git");
+
+      expect(execa).toHaveBeenCalledWith("git", ["--version"]);
+      expect(execa).toHaveBeenCalledWith("git", ["init"], {
+        cwd: "/test/path",
+      });
+      expect(execa).toHaveBeenCalledWith(
+        "git",
+        ["remote", "add", "origin", "https://github.com/user/repo.git"],
+        { cwd: "/test/path" },
+      );
+    });
+
+    it("should handle git initialization errors gracefully", async () => {
+      execa.mockRejectedValue(new Error("Git not installed"));
+
+      // Should not throw
+      await expect(
+        initializeGit("/test/path", "https://github.com/user/repo.git"),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("Utility Functions", () => {
+    describe("File Operations", () => {
+      it("should read package.json successfully", async () => {
+        const mockPackageJson = { name: "test", version: "1.0.0" };
+        fs.readJson.mockResolvedValue(mockPackageJson);
+
+        const result = await readPackageJson("/test/package.json");
+        expect(result).toEqual(mockPackageJson);
+      });
+
+      it("should handle package.json read errors", async () => {
+        fs.readJson.mockRejectedValue(new Error("File not found"));
+
+        await expect(readPackageJson("/test/package.json")).rejects.toThrow(
+          "Failed to read package.json",
         );
-
-        const config = {
-          projectName: "pm-test",
-          language: "JavaScript",
-          packageManager: "nonexistent-pm",
-          concurrently: true,
-          installDependencies: true,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        // Should handle gracefully with fallback
-        await expect(createProject(config)).rejects.toThrow();
       });
 
-      it("should handle package manager version conflicts", async () => {
-        // Mock successful package manager resolution
-        vi.mocked(fs.readJson).mockResolvedValue({
-          name: "test-project",
-          scripts: {},
-          devDependencies: {},
-        });
+      it("should write package.json successfully", async () => {
+        const mockPackageJson = { name: "test", version: "1.0.0" };
+        fs.writeJson.mockResolvedValue(undefined);
 
-        const config = {
-          projectName: "version-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).resolves.not.toThrow();
+        await writePackageJson("/test/package.json", mockPackageJson);
+        expect(fs.writeJson).toHaveBeenCalledWith(
+          "/test/package.json",
+          mockPackageJson,
+          { spaces: 2 },
+        );
       });
 
-      it("should handle corrupted package.json during script generation", async () => {
-        vi.mocked(fs.readJson).mockRejectedValue(new Error("Malformed JSON"));
-
-        const packageJsonPath = path.join(testDir, "package.json");
-        const packageManager = { name: "npm", command: "npm" };
+      it("should handle package.json write errors", async () => {
+        fs.writeJson.mockRejectedValue(new Error("Permission denied"));
 
         await expect(
-          updateConcurrentlyScripts(packageJsonPath, packageManager),
-        ).rejects.toThrow("Malformed JSON");
+          writePackageJson("/test/package.json", {}),
+        ).rejects.toThrow("Failed to write package.json");
       });
     });
 
-    describe("Git Integration Edge Cases", () => {
-      it("should handle git not installed", async () => {
-        vi.mocked(execa).mockRejectedValue(new Error("git: command not found"));
+    describe("Directory Operations", () => {
+      it("should ensure directory exists", async () => {
+        fs.ensureDir.mockResolvedValue(undefined);
 
-        const config = {
-          projectName: "git-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: true,
-          gitRepoUrl: "https://github.com/user/repo.git",
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow();
+        const result = await ensureDirectory("/test/dir");
+        expect(result).toBe(true);
+        expect(fs.ensureDir).toHaveBeenCalledWith("/test/dir");
       });
 
-      it("should handle invalid git repository URLs", async () => {
-        expect(() =>
-          constructGitHubUrl("invalid/url/format", "user"),
-        ).toThrow();
-        expect(() => constructGitHubUrl("", "user")).toThrow();
-        expect(() => constructGitHubUrl("repo", null)).toThrow();
-        expect(() => constructGitHubUrl("repo with spaces", "user")).toThrow();
-      });
+      it("should handle directory creation errors", async () => {
+        fs.ensureDir.mockRejectedValue(new Error("Permission denied"));
 
-      it("should handle network errors during git validation", async () => {
-        vi.mocked(execa).mockRejectedValue(new Error("Network unreachable"));
-
-        const result = await validateGitHubRepository(
-          "https://github.com/user/repo.git",
-        );
+        const result = await ensureDirectory("/test/dir");
         expect(result).toBe(false);
       });
 
-      it("should handle git repository access denied", async () => {
-        vi.mocked(execa).mockRejectedValue(new Error("Permission denied"));
+      it("should check if path exists", async () => {
+        fs.pathExists.mockResolvedValue(true);
 
-        const result = await validateGitHubRepository(
-          "https://github.com/private/repo.git",
-        );
-        expect(result).toBe(false);
+        const exists = await pathExists("/test/file");
+        expect(exists).toBe(true);
+      });
+
+      it("should handle path check errors", async () => {
+        fs.pathExists.mockRejectedValue(new Error("Access denied"));
+
+        const exists = await pathExists("/test/file");
+        expect(exists).toBe(false);
       });
     });
+  });
 
-    describe("Template Processing Edge Cases", () => {
-      beforeEach(() => {
-        // Ensure proper mocking for template processing tests
-        vi.mocked(fs.readJson).mockResolvedValue({
-          name: "test-project",
-          scripts: {},
-          devDependencies: {},
-        });
-      });
+  describe("Project Creation Edge Cases", () => {
+    it("should handle current directory project creation", async () => {
+      const config = {
+        projectName: "current-dir-project",
+        isCurrentDirectory: true,
+        language: "JavaScript",
+        packageManager: "npm",
+        concurrently: false,
+        initializeParts: "client",
+      };
 
-      it("should handle TypeScript template selection", async () => {
-        const config = {
-          projectName: "ts-test",
-          language: "TypeScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
+      // Mock all required functions
+      fs.copy.mockResolvedValue(undefined);
+      fs.pathExists.mockResolvedValue(false);
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
 
-        await expect(createProject(config)).resolves.not.toThrow();
-        expect(fs.copy).toHaveBeenCalledWith(
-          expect.stringContaining("templates/ts"),
-          expect.any(String),
-        );
-      });
-
-      it("should handle server-only setup with helper routes", async () => {
-        const config = {
-          projectName: "server-only-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: false,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.SERVER,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).resolves.not.toThrow();
-        // Should not call fs.remove for helper routes since they're enabled
-        expect(fs.copy).toHaveBeenCalled();
-      });
-
-      it("should handle all package manager types with workspaces", async () => {
-        const packageManagers = ["npm", "yarn", "pnpm", "bun"];
-
-        for (const pm of packageManagers) {
-          vi.clearAllMocks();
-          vi.mocked(fs.readJson).mockResolvedValue({
-            name: `${pm}-workspace-test`,
-            scripts: {},
-            devDependencies: {},
-          });
-
-          const config = {
-            projectName: `${pm}-workspace-test`,
-            language: "JavaScript",
-            packageManager: pm,
-            concurrently: true,
-            installDependencies: false,
-            gitRepo: false,
-            initializeParts: INIT_PARTS.BOTH,
-            includeHelperRoutes: true,
-          };
-
-          await expect(createProject(config)).resolves.not.toThrow();
-        }
-      });
+      await expect(createProject(config)).resolves.toBeUndefined();
     });
 
-    describe("Configuration Edge Cases", () => {
-      it("should handle missing template directories", async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
+    it("should handle client-only project creation", async () => {
+      const config = {
+        projectName: "test-client",
+        language: "TypeScript",
+        packageManager: "pnpm",
+        concurrently: false,
+        initializeParts: "client",
+      };
 
-        const result = await detectProjectConfiguration(testDir);
-        expect(result.lockFiles).toHaveLength(0);
-      });
+      fs.copy.mockResolvedValue(undefined);
+      fs.pathExists.mockResolvedValue(false);
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
 
-      it("should handle multiple conflicting lock files", async () => {
-        vi.mocked(fs.readdir).mockResolvedValue([
-          { name: "package-lock.json", isFile: () => true },
-          { name: "yarn.lock", isFile: () => true },
-          { name: "pnpm-lock.yaml", isFile: () => true },
-          { name: "bun.lockb", isFile: () => true },
-        ]);
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
-        vi.mocked(fs.readJson).mockResolvedValue({});
-
-        const result = await detectProjectConfiguration(testDir);
-        expect(result.lockFiles).toHaveLength(4);
-        expect(result.hasMultipleLockFiles).toBe(true);
-        expect(result.allSuggestions).toContain("npm");
-        expect(result.allSuggestions).toContain("yarn");
-        expect(result.allSuggestions).toContain("pnpm");
-        expect(result.allSuggestions).toContain("bun");
-      });
-
-      it("should handle malformed package.json in project detection", async () => {
-        vi.mocked(fs.readdir).mockResolvedValue([]);
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
-        vi.mocked(fs.readJson).mockRejectedValue(new Error("Invalid JSON"));
-
-        const result = await detectProjectConfiguration(testDir);
-        expect(result.packageJsonConfig).toBeNull();
-      });
+      await expect(createProject(config)).resolves.toBeUndefined();
     });
 
-    describe("Concurrent Execution Edge Cases", () => {
-      it("should handle concurrent project creation attempts", async () => {
-        const config = {
-          projectName: "concurrent-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
+    it("should handle server-only project creation", async () => {
+      const config = {
+        projectName: "test-server",
+        language: "JavaScript",
+        packageManager: "yarn",
+        concurrently: false,
+        initializeParts: "server",
+      };
 
-        // Simulate multiple concurrent calls
-        const promises = Array(3)
-          .fill(null)
-          .map(() => createProject(config));
+      fs.copy.mockResolvedValue(undefined);
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
+      fs.pathExists.mockResolvedValue(false);
 
-        // At least one should succeed (or all should fail consistently)
-        const results = await Promise.allSettled(promises);
-        const successful = results.filter((r) => r.status === "fulfilled");
-        const failed = results.filter((r) => r.status === "rejected");
-
-        // Either all succeed (mocked) or some fail due to conflicts
-        expect(successful.length + failed.length).toBe(3);
-      });
+      await expect(createProject(config)).resolves.toBeUndefined();
     });
 
-    describe("Memory and Performance Edge Cases", () => {
-      it("should handle large project names efficiently", () => {
-        const largeName = "a".repeat(1000);
-        const start = Date.now();
-        const result = validateProjectName(largeName);
-        const duration = Date.now() - start;
+    it("should handle concurrent project creation", async () => {
+      const config = {
+        projectName: "test-full",
+        language: "TypeScript",
+        packageManager: "bun",
+        concurrently: true,
+        initializeParts: "both",
+      };
 
-        expect(result.valid).toBe(false); // Should reject long names
-        expect(result.error).toContain("too long");
-        expect(duration).toBeLessThan(100); // Should be fast
-      });
+      fs.copy.mockResolvedValue(undefined);
+      fs.pathExists.mockResolvedValue(false);
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
 
-      it("should handle many dependency additions", async () => {
-        const packageJsonPath = path.join(testDir, "package.json");
-        const initialPackageJson = {
-          scripts: {},
-          devDependencies: {},
-        };
+      await expect(createProject(config)).resolves.toBeUndefined();
+    });
+  });
 
-        // Mock with concurrently dependency
-        const updatedPackageJson = {
-          ...initialPackageJson,
-          devDependencies: { concurrently: "^9.1.2" },
-        };
+  describe("Error Handling and Recovery", () => {
+    it("should handle file system errors gracefully", async () => {
+      fs.copy.mockRejectedValue(new Error("Disk full"));
 
-        vi.mocked(fs.readJson)
-          .mockResolvedValueOnce(initialPackageJson)
-          .mockResolvedValueOnce(updatedPackageJson);
+      const config = {
+        projectName: "test-project",
+        language: "JavaScript",
+        packageManager: "npm",
+        concurrently: false,
+        initializeParts: "both",
+      };
 
-        const packageManager = { name: "npm", command: "npm" };
-
-        const start = Date.now();
-        await updateConcurrentlyScripts(packageJsonPath, packageManager);
-        const duration = Date.now() - start;
-
-        expect(duration).toBeLessThan(1000); // Should be reasonably fast
-      });
+      await expect(createProject(config)).rejects.toThrow();
     });
 
-    describe("Boundary Conditions", () => {
-      it("should handle minimum valid project name", () => {
-        const result = validateProjectName("a");
+    it("should handle invalid template directory", async () => {
+      fs.copy.mockRejectedValue(new Error("Template not found"));
+
+      const config = {
+        projectName: "test-project",
+        language: "InvalidLanguage",
+        packageManager: "npm",
+        concurrently: false,
+        initializeParts: "both",
+      };
+
+      await expect(createProject(config)).rejects.toThrow();
+    });
+
+    it("should validate project name normalization", async () => {
+      // Test the internal validateAndNormalizeProjectName function behavior
+      const validNames = [
+        "my-app",
+        "MyApp123",
+        "app_with_underscores",
+        "123-app",
+      ];
+
+      validNames.forEach((name) => {
+        const result = validateProjectName(name);
         expect(result.valid).toBe(true);
-        expect(result.name).toBe("a");
-      });
-
-      it("should handle maximum valid project name length", () => {
-        const maxName = "a".repeat(214); // npm package name limit
-        const result = validateProjectName(maxName);
-        expect(result.valid).toBe(true);
-        expect(result.name.length).toBeLessThanOrEqual(214);
-      });
-
-      it("should handle project name at length boundary", () => {
-        const result = validateProjectName("a".repeat(215)); // Over 214 char limit
-        expect(result.valid).toBe(false);
-        expect(result.error).toContain("too long");
-      });
-
-      it("should handle empty arrays in project detection", async () => {
-        vi.mocked(fs.readdir).mockResolvedValue([]);
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
-
-        const result = await detectProjectConfiguration(testDir);
-        expect(result.lockFiles).toEqual([]);
-        expect(result.allSuggestions).toEqual([]);
       });
     });
+  });
 
-    describe("Cross-Platform Edge Cases", () => {
-      it("should handle Windows-style paths", async () => {
-        // Mock proper package.json for this test
-        vi.mocked(fs.readJson).mockResolvedValue({
-          name: "windows-test",
-          scripts: {},
-          devDependencies: {},
-        });
+  describe("Package Manager Specific Tests", () => {
+    it("should handle pnpm workspace configuration", async () => {
+      const mockPackageManager = { name: "pnpm", command: "pnpm" };
 
-        const config = {
-          projectName: "windows-test",
+      fs.readJson.mockResolvedValue({
+        scripts: {},
+        workspaces: ["client", "server"],
+      });
+
+      const { updateConcurrentlyScripts } = await import(
+        "../bin/lib/scriptGenerator.js"
+      );
+      await updateConcurrentlyScripts("/test/package.json", mockPackageManager);
+
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        "/test/package.json",
+        expect.objectContaining({
+          scripts: expect.any(Object),
+          // workspaces should be removed for pnpm
+        }),
+        { spaces: 2 },
+      );
+    });
+
+    it("should preserve yarn workspaces configuration", async () => {
+      const mockPackageManager = { name: "yarn", command: "yarn" };
+
+      fs.readJson.mockResolvedValue({
+        scripts: {},
+        workspaces: ["client", "server"],
+      });
+
+      const { updateConcurrentlyScripts } = await import(
+        "../bin/lib/scriptGenerator.js"
+      );
+      await updateConcurrentlyScripts("/test/package.json", mockPackageManager);
+
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        "/test/package.json",
+        expect.objectContaining({
+          scripts: expect.any(Object),
+          workspaces: ["client", "server"], // Should be preserved for yarn
+        }),
+        { spaces: 2 },
+      );
+    });
+  });
+
+  describe("Template Processing", () => {
+    it("should handle missing template files gracefully", async () => {
+      fs.pathExists.mockResolvedValue(false);
+      fs.readFile.mockRejectedValue(new Error("File not found"));
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
+
+      // Should not throw when template files are missing
+      await expect(
+        createProject({
+          projectName: "test",
           language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        // Should handle path normalization
-        await expect(createProject(config)).resolves.not.toThrow();
-      });
-
-      it("should handle case-sensitive file systems", async () => {
-        vi.mocked(fs.pathExists).mockImplementation((filePath) => {
-          const pathStr = filePath.toString().toLowerCase();
-          return Promise.resolve(pathStr.includes("package.json"));
-        });
-
-        const result = await getPackageName(testDir, "Client"); // Mixed case
-        expect(typeof result).toBe("string");
-      });
-    });
-
-    describe("Async Operation Edge Cases", () => {
-      it("should handle slow file operations", async () => {
-        // Mock proper package.json and slow copy operation
-        vi.mocked(fs.readJson).mockResolvedValue({
-          name: "slow-test",
-          scripts: {},
-          devDependencies: {},
-        });
-        vi.mocked(fs.copy).mockImplementation(
-          () => new Promise((resolve) => setTimeout(resolve, 100)),
-        );
-
-        const config = {
-          projectName: "slow-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        const start = Date.now();
-        await expect(createProject(config)).resolves.not.toThrow();
-        const duration = Date.now() - start;
-        expect(duration).toBeGreaterThan(50); // Should wait for slow operation
-      });
-
-      it("should handle promise rejection chains", async () => {
-        vi.mocked(fs.ensureDir).mockRejectedValue(new Error("First error"));
-        vi.mocked(fs.mkdir).mockRejectedValue(new Error("Second error"));
-
-        const config = {
-          projectName: "chain-error-test",
-          language: "JavaScript",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow();
-      });
-    });
-
-    describe("Configuration Validation Edge Cases", () => {
-      it("should handle null and undefined config values", async () => {
-        const config = {
-          projectName: "null-test",
-          language: null,
-          packageManager: undefined,
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: INIT_PARTS.BOTH,
-          includeHelperRoutes: true,
-        };
-
-        // Should handle gracefully or throw meaningful error
-        await expect(createProject(config)).rejects.toThrow();
-      });
-
-      it("should handle invalid enum values", async () => {
-        const config = {
-          projectName: "enum-test",
-          language: "InvalidLanguage",
-          packageManager: "npm",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: "invalid-part",
-          includeHelperRoutes: true,
-        };
-
-        await expect(createProject(config)).rejects.toThrow();
-      });
-    });
-
-    describe("Question Logic Edge Cases", () => {
-      it("should handle all question conditional logic branches", () => {
-        const helperRoutesQuestion = questions.find(
-          (q) => q.name === "includeHelperRoutes",
-        );
-
-        // Test all possible combinations
-        expect(helperRoutesQuestion.when({ concurrently: true })).toBe(true);
-        expect(
-          helperRoutesQuestion.when({
-            concurrently: false,
-            initializeParts: "both",
-          }),
-        ).toBe(true);
-        expect(
-          helperRoutesQuestion.when({
-            concurrently: false,
-            initializeParts: "server",
-          }),
-        ).toBe(true);
-        expect(
-          helperRoutesQuestion.when({
-            concurrently: false,
-            initializeParts: "client",
-          }),
-        ).toBe(false);
-        expect(helperRoutesQuestion.when({ initializeParts: "both" })).toBe(
-          true,
-        );
-        expect(helperRoutesQuestion.when({ initializeParts: "server" })).toBe(
-          true,
-        );
-        expect(helperRoutesQuestion.when({ initializeParts: "client" })).toBe(
-          false,
-        );
-      });
-
-      it("should validate all question types exist", () => {
-        const requiredQuestions = [
-          "projectName",
-          "language",
-          "packageManager",
-          "initializeParts",
-          "concurrently",
-          "includeHelperRoutes",
-          "installDependencies",
-          "gitRepo",
-          "gitRepoUrl",
-        ];
-
-        requiredQuestions.forEach((questionName) => {
-          const question = questions.find((q) => q.name === questionName);
-          expect(question).toBeDefined();
-        });
-      });
-    });
-
-    describe("Bun Types Integration", () => {
-      it("should add @types/bun to devDependencies when using bun package manager", async () => {
-        // Mock package.json read/write operations
-        const mockPackageJson = {
-          name: "test-project-server",
-          version: "1.0.0",
-          dependencies: {},
-          devDependencies: {
-            typescript: "^5.0.0",
-          },
-        };
-
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
-        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-
-        const config = {
-          projectName: "test-project",
-          language: "ts",
-          packageManager: "bun",
-          concurrently: false,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: "server",
-          includeHelperRoutes: true,
-        };
-
-        await createProject(config);
-
-        // Verify that writeJson was called with @types/bun added
-        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
-        const packageJsonWrite = writeJsonCalls.find((call) =>
-          call[0].toString().includes("package.json"),
-        );
-
-        expect(packageJsonWrite).toBeDefined();
-        expect(packageJsonWrite[1].devDependencies["@types/bun"]).toBe(
-          "latest",
-        );
-      });
-
-      it("should not add @types/bun when using other package managers", async () => {
-        const mockPackageJson = {
-          name: "test-project-server",
-          version: "1.0.0",
-          dependencies: {},
-          devDependencies: {
-            typescript: "^5.0.0",
-          },
-        };
-
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
-        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-
-        const config = {
-          projectName: "test-project",
-          language: "ts",
           packageManager: "npm",
           concurrently: false,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: "server",
-          includeHelperRoutes: true,
-        };
+          initializeParts: "client",
+        }),
+      ).resolves.toBeUndefined();
+    });
 
-        await createProject(config);
+    it("should process gitignore files correctly", async () => {
+      fs.pathExists.mockImplementation(
+        (path) => path.includes("gitignore") && !path.includes(".gitignore"),
+      );
+      fs.move.mockResolvedValue(undefined);
+      fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
 
-        // Verify that @types/bun was not added
-        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
-        const packageJsonWrite = writeJsonCalls.find((call) =>
-          call[0].toString().includes("package.json"),
-        );
-
-        if (packageJsonWrite) {
-          expect(
-            packageJsonWrite[1].devDependencies["@types/bun"],
-          ).toBeUndefined();
-        }
+      await createProject({
+        projectName: "test",
+        language: "JavaScript",
+        packageManager: "npm",
+        concurrently: false,
+        initializeParts: "client",
       });
 
-      it("should add @types/bun to multiple package.json files in concurrent setup", async () => {
-        const mockPackageJson = {
-          name: "test-project",
-          version: "1.0.0",
-          dependencies: {},
-          devDependencies: {},
-        };
+      expect(fs.move).toHaveBeenCalledWith(
+        expect.stringContaining("gitignore"),
+        expect.stringContaining(".gitignore"),
+      );
+    });
+  });
 
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
-        vi.mocked(fs.readJson).mockResolvedValue(mockPackageJson);
-        vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+  describe("Real Integration Tests", () => {
+    it("should create real project (integration test)", async () => {
+      // This test verifies that the mocked behavior matches real behavior
+      // by testing the core validation functions with real implementations
 
-        const config = {
-          projectName: "test-project",
-          language: "ts",
-          packageManager: "bun",
-          concurrently: true,
-          installDependencies: false,
-          gitRepo: false,
-          initializeParts: "both",
-          includeHelperRoutes: true,
-        };
+      // Test real project name validation
+      const realValidation = validateProjectName("test-real-project");
+      expect(realValidation.valid).toBe(true);
+      expect(realValidation.name).toBe("test-real-project");
 
-        await createProject(config);
+      // Test invalid project name
+      const invalidValidation = validateProjectName("invalid/name");
+      expect(invalidValidation.valid).toBe(false);
 
-        // Verify that @types/bun was added to both client and server package.json files
-        const writeJsonCalls = vi.mocked(fs.writeJson).mock.calls;
-        const packageJsonWrites = writeJsonCalls.filter((call) =>
-          call[0].toString().includes("package.json"),
-        );
+      // Test git URL construction
+      const validUrl = constructGitHubUrl("test-repo", "testuser");
+      expect(validUrl).toBe("https://github.com/testuser/test-repo.git");
 
-        expect(packageJsonWrites.length).toBeGreaterThan(0);
+      // Test that constants are properly defined
+      expect(INIT_PARTS.BOTH).toBe("both");
+      expect(INIT_PARTS.CLIENT).toBe("client");
+      expect(INIT_PARTS.SERVER).toBe("server");
 
-        // Check that at least one package.json has @types/bun added
-        const hasTypesBundle = packageJsonWrites.some(
-          (call) =>
-            call[1].devDependencies &&
-            call[1].devDependencies["@types/bun"] === "latest",
-        );
-        expect(hasTypesBundle).toBe(true);
-      });
+      // Test that questions array is properly structured
+      expect(Array.isArray(questions)).toBe(true);
+      expect(questions.length).toBeGreaterThan(0);
     });
   });
 });

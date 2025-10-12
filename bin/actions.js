@@ -301,160 +301,42 @@ async function addBunTypesToProject(
   }
 }
 
-async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
-  // console.log(createProgressMessage("Removing helper routes..."));
+async function renameTemplateTestFiles(projectPath, initializeParts) {
+  const testFileRenames = [
+    {
+      from: "server.template-test.js",
+      to: "server.test.js",
+    },
+    {
+      from: "server.template-test.ts",
+      to: "server.test.ts",
+    },
+  ];
 
-  const serverPaths = [];
+  const searchPaths = [];
 
-  // Determine server paths to process
-  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-    serverPaths.push(path.join(projectPath, "server"));
+  if (initializeParts === INIT_PARTS.BOTH) {
+    searchPaths.push(
+      path.join(projectPath, "server", "src", "__tests__"),
+      path.join(projectPath, "client", "src", "__tests__"),
+    );
   } else if (initializeParts === INIT_PARTS.SERVER) {
-    // For server-only setup, server files are in project root
-    serverPaths.push(projectPath);
+    searchPaths.push(path.join(projectPath, "src", "__tests__"));
+  } else if (initializeParts === INIT_PARTS.CLIENT) {
+    searchPaths.push(path.join(projectPath, "src", "__tests__"));
   }
 
-  for (const serverPath of serverPaths) {
-    const filesToRemove = [
-      path.join(serverPath, "src", "middleware", "authMiddleware.js"),
-      path.join(serverPath, "src", "middleware", "authMiddleware.ts"),
-      path.join(serverPath, "src", "models", "user.js"),
-      path.join(serverPath, "src", "models", "user.ts"),
-      path.join(serverPath, "src", "routes", "users.js"),
-      path.join(serverPath, "src", "routes", "users.ts"),
-      path.join(serverPath, "src", "utils", "generateToken.js"),
-      path.join(serverPath, "src", "utils", "generateToken.ts"),
-    ];
+  for (const searchPath of searchPaths) {
+    if (await fs.pathExists(searchPath)) {
+      for (const rename of testFileRenames) {
+        const fromPath = path.join(searchPath, rename.from);
+        const toPath = path.join(searchPath, rename.to);
 
-    for (const filePath of filesToRemove) {
-      if (await fs.pathExists(filePath)) {
-        await fs.remove(filePath);
-        // console.log(
-        //     chalk.gray(
-        //         `   ✓ Removed ${path.relative(projectPath, filePath)}`,
-        //     ),
-        // );
+        if (await fs.pathExists(fromPath)) {
+          await fs.move(fromPath, toPath);
+        }
       }
     }
-
-    // Update the index route file to remove users import and route
-    const indexRouteJs = path.join(serverPath, "src", "routes", "index.js");
-    const indexRouteTs = path.join(serverPath, "src", "routes", "index.ts");
-
-    if (await fs.pathExists(indexRouteJs)) {
-      await updateIndexRoute(indexRouteJs);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
-      //     ),
-      // );
-    }
-
-    if (await fs.pathExists(indexRouteTs)) {
-      await updateIndexRoute(indexRouteTs);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
-      //     ),
-      // );
-    }
-  }
-
-  // Update Demo files in client to remove helper route references
-  const clientPaths = [];
-
-  // Determine client paths to process
-  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-    clientPaths.push(path.join(projectPath, "client"));
-  } else if (initializeParts === INIT_PARTS.CLIENT) {
-    // For client-only setup, client files are in project root
-    clientPaths.push(projectPath);
-  }
-
-  for (const clientPath of clientPaths) {
-    const demoJsxPath = path.join(clientPath, "src", "pages", "Demo.jsx");
-    const demoTsxPath = path.join(clientPath, "src", "pages", "Demo.tsx");
-
-    if (await fs.pathExists(demoJsxPath)) {
-      await updateDemoFile(demoJsxPath);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
-      //     ),
-      // );
-    }
-
-    if (await fs.pathExists(demoTsxPath)) {
-      await updateDemoFile(demoTsxPath);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
-      //     ),
-      // );
-    }
-  }
-}
-
-async function updateIndexRoute(indexRoutePath) {
-  try {
-    const content = await fs.readFile(indexRoutePath, "utf8");
-
-    // Remove the users import line
-    let updatedContent = content.replace(
-      /import users from ["']\.\/users\.js["'];\s*\n?/g,
-      "",
-    );
-
-    // Remove the users route line
-    updatedContent = updatedContent.replace(
-      /router\.use\(["']\/users["'], users\);\s*\n?/g,
-      "",
-    );
-
-    // Clean up any extra empty lines
-    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
-
-    await fs.writeFile(indexRoutePath, updatedContent, "utf8");
-  } catch (error) {
-    console.log(
-      chalk.yellow(`⚠️  Could not update ${indexRoutePath}: ${error.message}`),
-    );
-  }
-}
-
-async function updateDemoFile(demoFilePath) {
-  try {
-    const content = await fs.readFile(demoFilePath, "utf8");
-
-    // Define the items to remove (with flexible whitespace and line breaks)
-    const itemsToRemove = [
-      // Database Models item
-      /\{\s*title:\s*["']Database Models["'],\s*code:\s*["']server\/src\/models\/["'],\s*description:\s*["']Create or modify models for your data structure \(remove User model if not needed\)["'],?\s*\},?\s*/gs,
-      // Remove Demo Api Routes item
-      /\{\s*title:\s*["']Remove Demo Api Routes["'],\s*code:\s*["']server\/src\/routes\/users\.js["'],\s*description:\s*["']Delete or modify sample auth and user routes\. Create routes specific to your app["'],?\s*\},?\s*/gs,
-      // Update Route Index item
-      /\{\s*title:\s*["']Update Route Index["'],\s*code:\s*["']server\/src\/routes\/index\.js["'],\s*description:\s*["']Register your new routes and remove unused demo route imports["'],?\s*\},?\s*/gs,
-    ];
-
-    let updatedContent = content;
-
-    // Remove each item
-    itemsToRemove.forEach((pattern) => {
-      updatedContent = updatedContent.replace(pattern, "");
-    });
-
-    // Clean up any trailing commas and extra whitespace in the items array
-    updatedContent = updatedContent.replace(/,(\s*)\]/g, "$1]");
-    updatedContent = updatedContent.replace(/\[\s*,/g, "[");
-
-    // Clean up any extra empty lines
-    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
-
-    await fs.writeFile(demoFilePath, updatedContent, "utf8");
-  } catch (error) {
-    console.log(
-      chalk.yellow(`⚠️  Could not update ${demoFilePath}: ${error.message}`),
-    );
   }
 }
 
@@ -463,45 +345,32 @@ async function processTemplateFiles(
   projectName,
   concurrently,
   initializeParts,
-  includeHelperRoutes = true,
 ) {
   console.log(chalk.blue("\n▸ Customizing template files..."));
   console.log(chalk.grey(`   Project: ${projectName}`));
   console.log(chalk.grey(`   Concurrent: ${concurrently}`));
   console.log(chalk.grey(`   InitializeParts: ${initializeParts}`));
 
+  // Rename template test files to proper test files
+  await renameTemplateTestFiles(projectPath, initializeParts);
+
   // Process files based on setup type
   if (concurrently) {
     // For concurrent setup, process both client and server from root
     await processClientFiles(projectPath, projectName, "client");
-    await processServerFiles(
-      projectPath,
-      projectName,
-      "server",
-      includeHelperRoutes,
-    );
+    await processServerFiles(projectPath, projectName, "server");
     await processRootFiles(projectPath, projectName);
   } else if (initializeParts === INIT_PARTS.BOTH) {
     // For both parts (non-concurrent), use traditional structure
     await processClientFiles(projectPath, projectName, "client");
-    await processServerFiles(
-      projectPath,
-      projectName,
-      "server",
-      includeHelperRoutes,
-    );
+    await processServerFiles(projectPath, projectName, "server");
     await processRootFiles(projectPath, projectName);
   } else {
     // For client-only or server-only, files are in project root
     if (initializeParts === INIT_PARTS.CLIENT) {
       await processClientFiles(projectPath, projectName, ".");
     } else if (initializeParts === INIT_PARTS.SERVER) {
-      await processServerFiles(
-        projectPath,
-        projectName,
-        ".",
-        includeHelperRoutes,
-      );
+      await processServerFiles(projectPath, projectName, ".");
     }
     // Process root files for single-part setups too
     await processRootFiles(projectPath, projectName);
@@ -582,12 +451,7 @@ async function processClientFiles(projectPath, projectName, clientDir) {
   // }
 }
 
-async function processServerFiles(
-  projectPath,
-  projectName,
-  serverDir,
-  includeHelperRoutes = true,
-) {
+async function processServerFiles(projectPath, projectName, serverDir) {
   const serverPath = path.join(projectPath, serverDir);
 
   // Rename gitignore to .gitignore
@@ -873,7 +737,6 @@ async function copyTemplateFiles(
   concurrently,
   initializeParts = INIT_PARTS.BOTH,
   projectName,
-  includeHelperRoutes = true,
 ) {
   if (concurrently || initializeParts === INIT_PARTS.BOTH) {
     await fs.copy(templateDir, projectPath);
@@ -900,11 +763,6 @@ async function copyTemplateFiles(
     }
   }
 
-  // Remove helper routes if not requested
-  if (!includeHelperRoutes) {
-    await removeHelperRoutes(projectPath, concurrently, initializeParts);
-  }
-
   // Remove server-related content from Demo files for client-only projects
   if (initializeParts === INIT_PARTS.CLIENT) {
     await removeServerContentFromDemo(projectPath);
@@ -916,7 +774,6 @@ async function copyTemplateFiles(
     projectName,
     concurrently,
     initializeParts,
-    includeHelperRoutes,
   );
 }
 
@@ -1102,8 +959,6 @@ export async function createProject(config) {
       config.concurrently,
       config.initializeParts,
       config.actualProjectName || config.projectName,
-      config.includeHelperRoutes,
-      packageManager,
     );
     await processPackageJson(
       projectPath,

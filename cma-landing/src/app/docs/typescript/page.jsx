@@ -1,13 +1,14 @@
 export default function TypescriptPage() {
     return (
         <div>
-            <header className="space-y-4 mb-12">
+            <header className="space-y-4 mb-8">
                 <h1 className="text-4xl font-bold tracking-tight">
                     TypeScript Template
                 </h1>
                 <p className="text-lg text-zinc-600 dark:text-zinc-400">
                     The TypeScript template provides a fully type-safe
-                    development experience.
+                    development experience with strict type checking and modern
+                    TypeScript features.
                 </p>
                 <hr className="border-zinc-200 dark:border-zinc-800" />
             </header>
@@ -40,20 +41,52 @@ export default function TypescriptPage() {
                                     where routing is handled.
                                 </li>
                                 <li>
+                                    <b>`src/Layout.tsx`</b>: Layout wrapper
+                                    component with navigation and theme support.
+                                </li>
+                                <li>
                                     <b>`src/pages/`</b>: Contains the page
-                                    components for different routes.
+                                    components (Demo.tsx, NotFound.tsx).
                                 </li>
                                 <li>
                                     <b>`src/components/`</b>: Reusable React
-                                    components.
+                                    components including Navigation.tsx.
+                                </li>
+                                <li>
+                                    <b>`src/components/ui/`</b>: UI components
+                                    like ThemeToggle.tsx.
+                                </li>
+                                <li>
+                                    <b>`src/hooks/`</b>: Custom React hooks
+                                    (useTheme.ts).
+                                </li>
+                                <li>
+                                    <b>`src/config/`</b>: Configuration files
+                                    (constants.ts).
                                 </li>
                                 <li>
                                     <b>`src/global.css`</b>: Global styles and
                                     Tailwind CSS imports.
                                 </li>
                                 <li>
+                                    <b>`src/vite-env.d.ts`</b>: Vite environment
+                                    type definitions.
+                                </li>
+                                <li>
                                     <b>`vite.config.ts`</b>: Vite configuration
-                                    file.
+                                    file with TypeScript.
+                                </li>
+                                <li>
+                                    <b>`tsconfig.json`</b>: Main TypeScript
+                                    configuration.
+                                </li>
+                                <li>
+                                    <b>`tsconfig.app.json`</b>: App-specific
+                                    TypeScript config.
+                                </li>
+                                <li>
+                                    <b>`tsconfig.node.json`</b>: Node.js
+                                    TypeScript config.
                                 </li>
                             </ul>
                         </div>
@@ -124,27 +157,41 @@ export default function TypescriptPage() {
                             <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400">
                                 <li>
                                     <b>axios</b>: For making HTTP requests to
-                                    the backend API.
+                                    the backend API with full TypeScript support
+                                    (full-stack only).
                                 </li>
                                 <li>
                                     <b>lucide-react</b>: A library of simply
-                                    beautiful icons.
+                                    beautiful icons with TypeScript definitions.
                                 </li>
                                 <li>
                                     <b>react</b>: A JavaScript library for
-                                    building user interfaces.
+                                    building user interfaces with TypeScript
+                                    support (v18+).
                                 </li>
                                 <li>
                                     <b>react-dom</b>: Serves as the entry point
-                                    to the DOM and server renderers for React.
+                                    to the DOM with TypeScript definitions.
                                 </li>
                                 <li>
-                                    <b>react-router</b>: For handling routing in
-                                    the React application.
+                                    <b>react-router-dom</b>: For handling typed
+                                    routing in the React application (v6).
                                 </li>
                                 <li>
                                     <b>tailwindcss</b>: A utility-first CSS
-                                    framework for rapid UI development.
+                                    framework v4 with TypeScript configuration.
+                                </li>
+                                <li>
+                                    <b>vite</b>: Fast build tool with TypeScript
+                                    support and HMR.
+                                </li>
+                                <li>
+                                    <b>vitest</b>: Fast unit testing framework
+                                    with TypeScript support.
+                                </li>
+                                <li>
+                                    <b>@types/*</b>: Type definitions for React,
+                                    Node.js, and other libraries.
                                 </li>
                             </ul>
                         </div>
@@ -215,22 +262,43 @@ export default function TypescriptPage() {
                                 </li>
                                 <li>
                                     <b>`src/config/connectDB.ts`</b>: MongoDB
-                                    connection logic.
+                                    connection logic with TypeScript.
                                 </li>
                                 <li>
-                                    <b>`src/models/`</b>: Mongoose schemas for
-                                    your database models.
+                                    <b>`src/config/validateEnv.ts`</b>:
+                                    Environment variable validation with types.
                                 </li>
                                 <li>
-                                    <b>`src/routes/`</b>: API route definitions.
+                                    <b>`src/models/`</b>: Mongoose schemas with
+                                    TypeScript interfaces (.gitkeep).
+                                </li>
+                                <li>
+                                    <b>`src/routes/`</b>: API route definitions
+                                    (index.ts with typed routes).
                                 </li>
                                 <li>
                                     <b>`src/middleware/`</b>: Custom middleware
-                                    for authentication, error handling, etc.
+                                    with TypeScript (errorMiddleware.ts).
                                 </li>
                                 <li>
-                                    <b>`src/controllers/`</b>: (Optional) Logic
-                                    for handling requests and responses.
+                                    <b>`src/controllers/`</b>: Request handlers
+                                    with TypeScript (.gitkeep for future use).
+                                </li>
+                                <li>
+                                    <b>`src/types/`</b>: TypeScript type
+                                    definitions (index.ts).
+                                </li>
+                                <li>
+                                    <b>`src/validation/`</b>: Input validation
+                                    with TypeScript (empty for now).
+                                </li>
+                                <li>
+                                    <b>`src/__tests__/`</b>: Server tests with
+                                    TypeScript and setup configuration.
+                                </li>
+                                <li>
+                                    <b>`src/utils/`</b>: Utility functions with
+                                    TypeScript (.gitkeep for future use).
                                 </li>
                             </ul>
                         </div>
@@ -310,54 +378,64 @@ export default function TypescriptPage() {
                             </h4>
                             <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400">
                                 <li>
-                                    <b>bcryptjs</b>: For hashing passwords.
-                                </li>
-                                <li>
                                     <b>compression</b>: For compressing HTTP
-                                    responses.
+                                    responses with typed middleware.
                                 </li>
                                 <li>
                                     <b>cors</b>: For enabling Cross-Origin
-                                    Resource Sharing.
+                                    Resource Sharing with TypeScript
+                                    configuration.
                                 </li>
                                 <li>
                                     <b>dotenv</b>: For loading environment
-                                    variables from a `.env` file.
+                                    variables with type safety.
                                 </li>
                                 <li>
                                     <b>express</b>: A fast, unopinionated,
-                                    minimalist web framework for Node.js.
+                                    minimalist web framework with full
+                                    TypeScript support.
                                 </li>
                                 <li>
                                     <b>express-rate-limit</b>: For rate-limiting
-                                    requests to the API.
+                                    requests with typed configuration.
                                 </li>
                                 <li>
                                     <b>express-validator</b>: For validating
-                                    incoming request data.
+                                    incoming request data with TypeScript types.
                                 </li>
                                 <li>
-                                    <b>helmet</b>: For securing Express apps by
-                                    setting various HTTP headers.
-                                </li>
-                                <li>
-                                    <b>jsonwebtoken</b>: For generating and
-                                    verifying JSON Web Tokens.
+                                    <b>helmet</b>: For securing Express apps
+                                    with typed security headers.
                                 </li>
                                 <li>
                                     <b>mongoose</b>: An Object Data Modeling
-                                    (ODM) library for MongoDB.
+                                    (ODM) library with comprehensive TypeScript
+                                    schemas.
                                 </li>
                                 <li>
-                                    <b>morgan</b>: For logging HTTP requests.
+                                    <b>morgan</b>: For logging HTTP requests
+                                    with typed middleware.
                                 </li>
                                 <li>
                                     <b>tsx</b>: A TypeScript execution and
-                                    scripting tool.
+                                    scripting tool for development.
                                 </li>
                                 <li>
-                                    <b>@types/*</b>: Type definitions for
-                                    various libraries.
+                                    <b>typescript</b>: The TypeScript compiler
+                                    with strict configuration.
+                                </li>
+                                <li>
+                                    <b>vitest</b>: Fast testing framework with
+                                    full TypeScript support.
+                                </li>
+                                <li>
+                                    <b>@types/*</b>: Comprehensive type
+                                    definitions for Node.js, Express, MongoDB,
+                                    and other libraries.
+                                </li>
+                                <li>
+                                    <b>@types/bun</b>: Automatically added when
+                                    using bun package manager.
                                 </li>
                             </ul>
                         </div>
@@ -413,15 +491,6 @@ export default function TypescriptPage() {
                                         </td>
                                         <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
                                             The URL of the client application.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            `JWT_SECRET`
-                                        </td>
-                                        <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            A secret key for signing JSON Web
-                                            Tokens.
                                         </td>
                                     </tr>
                                 </tbody>

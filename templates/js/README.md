@@ -5,15 +5,18 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 ## 🚀 Features
 
 -   **Modern Stack**: React, Node.js, Express, MongoDB
--   **Development Tools**: Hot reload, ESLint, Vite
--   **UI Components**: Tailwind CSS with custom components
--   **Testing**: Vitest with React Testing Library
--   **Security**: JWT Authentication, Helmet, CORS, Rate limiting, Compression, Query Sanitization
--   **Database**: MongoDB with Mongoose ODM
--   **Validation**: Express Validator
--   **Error Handling**: Centralized error handling
--   **Logging**: Morgan for HTTP request logging
+-   **Package Manager Support**: Works with bun, pnpm, yarn, or npm
+-   **Flexible Setup**: Client-only, server-only, or full-stack initialization
+-   **Development Tools**: Hot reload, ESLint, Vite with fast refresh
+-   **UI Components**: Tailwind CSS v4 with custom components and dark mode
+-   **Security**: Helmet, CORS, Rate limiting, Compression, Query Sanitization
+-   **Database**: MongoDB with Mongoose ODM and connection management
+-   **Validation**: Express Validator with comprehensive error handling
+-   **Error Handling**: Centralized error handling with custom middleware
+-   **Logging**: Morgan for HTTP request logging in development
 -   **Routing**: React Router for client-side routing
+-   **Git Integration**: Automatic Git initialization with GitHub support
+-   **Production Ready**: Optimized build configurations and deployment setup
 
 ## 📁 Project Structure
 
@@ -21,48 +24,60 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 ├── client/                 # React frontend
 │   ├── public/             # Static assets
 │   ├── src/
-│   │   ├── assets/
+│   │   ├── assets/         # Static assets (.gitkeep)
 │   │   ├── components/     # Reusable UI components
-│   │   │   ├── ui/         # UI components (ThemeToggle)
+│   │   │   ├── ui/         # UI components
+│   │   │   │   └── ThemeToggle.jsx
 │   │   │   └── Navigation.jsx
 │   │   ├── config/         # Configuration files
 │   │   │   └── constants.js
-│   │   ├── context/
+│   │   ├── context/        # React contexts (.gitkeep)
 │   │   ├── hooks/          # Custom React hooks
 │   │   │   └── useTheme.js
 │   │   ├── pages/          # Page components
 │   │   │   ├── Demo.jsx    # Landing page with demo content
 │   │   │   └── NotFound.jsx # 404 page
-│   │   ├── utils/
+│   │   ├── utils/          # Utility functions (.gitkeep)
 │   │   ├── App.jsx         # Main app with routing
 │   │   ├── Layout.jsx      # Layout wrapper
 │   │   ├── main.jsx        # React entry point
 │   │   └── global.css      # Global styles
 │   ├── index.html          # HTML template
 │   ├── vite.config.js      # Vite configuration
+│   ├── eslint.config.js    # ESLint configuration
+│   ├── .prettierrc         # Prettier configuration
+│   ├── .prettierignore     # Prettier ignore file
+│   ├── .env.example        # Environment variables template
 │   └── package.json
 ├── server/                 # Express backend
 │   ├── src/
-│   │   ├── config/         # Database configuration
-│   │   │   └── connectDB.js
-│   │   ├── middleware/     # Custom middleware
-│   │   │   ├── authMiddleware.js
-│   │   │   ├── errorMiddleware.js
-│   │   │   └── querySanitizer.js
-│   │   ├── models/         # Mongoose models
-│   │   │   └── user.js
-│   │   ├── routes/         # API routes
-│   │   │   ├── index.js
-│   │   │   └── users.js
-│   │   ├── utils/
-│   │   │   └── generateToken.js
 │   │   ├── __tests__/      # Server tests
-│   │   │   └── server.test.js
+│   │   │   ├── server.test.js
+│   │   │   └── setup.js
+│   │   ├── config/         # Database and app configuration
+│   │   │   ├── connectDB.js
+│   │   │   └── validateEnv.js
+│   │   ├── controllers/    # Request handlers (.gitkeep)
+│   │   ├── middleware/     # Custom middleware
+│   │   │   └── errorMiddleware.js
+│   │   ├── models/         # Mongoose models (.gitkeep)
+│   │   ├── routes/         # API routes
+│   │   │   └── index.js
+│   │   ├── utils/          # Utility functions (.gitkeep)
+│   │   ├── validation/     # Input validation
+│   │   │   └── validationHandler.js
 │   │   └── server.js       # Server entry point
 │   ├── .env.example        # Environment variables template
-│   ├── vitest.config.js    # Vitest configuration
+│   ├── .env.test           # Test environment variables
+│   ├── jest.config.js      # Jest configuration
+│   ├── jsconfig.json       # JavaScript configuration
+│   ├── eslint.config.js    # ESLint configuration
+│   ├── .prettierrc         # Prettier configuration
+│   ├── .prettierignore     # Prettier ignore file
 │   └── package.json
-└── package.json           # Workspace configuration
+├── .gitignore              # Git ignore file
+├── package.json            # Workspace configuration
+└── README.md               # Project documentation
 ```
 
 ## 🛠️ Getting Started
@@ -70,15 +85,24 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 ### Prerequisites
 
 -   **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
--   **npm**
+-   **Package Manager**: One of bun, pnpm, yarn, or npm (npm comes with Node.js)
 -   **MongoDB** (local or cloud) - [Download here](https://www.mongodb.com/try/download/community)
+-   **Git** (optional, for repository initialization) - [Download here](https://git-scm.com/)
 
 ### Installation
+
+The installation steps depend on how you initialized your project:
+
+#### For Full Stack (Both Client & Server)
 
 1. **Install dependencies**:
 
     ```bash
-    npm install
+    # Using your chosen package manager
+    npm install        # or
+    pnpm install       # or  
+    yarn install       # or
+    bun install
     ```
 
 2. **Set up environment variables**:
@@ -95,12 +119,30 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
     NODE_ENV=development
     MONGODB_URI=mongodb://127.0.0.1:27017/your_app_name
     CORS_ORIGIN=http://localhost:5173
-    JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
     ```
 
 3. **Start development servers**:
     ```bash
-    npm run dev
+    npm run dev        # Starts both client and server
+    ```
+
+#### For Client-Only Setup
+
+1. **Install dependencies and start**:
+    ```bash
+    npm install && npm run dev
+    ```
+
+#### For Server-Only Setup
+
+1. **Set up environment variables**:
+    ```bash
+    cp .env.example .env
+    ```
+
+2. **Install dependencies and start**:
+    ```bash
+    npm install && npm run dev
     ```
 
 This will start:
@@ -110,25 +152,45 @@ This will start:
 
 ## 📜 Available Scripts
 
-### Workspace Scripts
+The available scripts depend on your project setup:
 
+### Full Stack (Both Client & Server)
+
+#### Workspace Scripts (from root directory)
 -   `npm run dev` - Start both client and server in development mode
 -   `npm run build` - Build both client and server for production
 -   `npm run start` - Start production server
 -   `npm run test` - Run tests for server
 -   `npm run lint` - Lint both client and server code
 
-### Client Scripts
-
+#### Individual Component Scripts
 -   `npm run client` - Start only the client
+-   `npm run server` - Start only the server
 -   `npm run build --workspace client` - Build client for production
 -   `npm run preview --workspace client` - Preview production build
-
-### Server Scripts
-
--   `npm run server` - Start only the server
 -   `npm run test --workspace server` - Run server tests
--   `npm run start --workspace server` - Start production server
+
+### Client-Only Setup
+
+-   `npm run dev` - Start development server
+-   `npm run build` - Build for production
+-   `npm run preview` - Preview production build
+-   `npm run lint` - Lint code with ESLint
+
+### Server-Only Setup
+
+-   `npm run dev` - Start development server with hot reload
+-   `npm run start` - Start production server
+-   `npm run build` - Build for production (if using TypeScript)
+-   `npm run test` - Run server tests
+-   `npm run lint` - Lint code with ESLint
+
+### Package Manager Specific Commands
+
+Replace `npm` with your chosen package manager:
+-   **bun**: `bun run dev`, `bun install`, etc.
+-   **pnpm**: `pnpm dev`, `pnpm install`, etc.
+-   **yarn**: `yarn dev`, `yarn install`, etc.
 
 ## 🔧 Configuration
 
@@ -147,12 +209,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017/mern_app
 # Client URL for CORS
 CORS_ORIGIN=http://localhost:5173
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=30d
-
 # Security
-BCRYPT_ROUNDS=12
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
@@ -179,10 +236,8 @@ VITE_API_URL=http://localhost:8000
     - Customize UI components in `client/src/components/ui/` (ThemeToggle)
 
 2. **Server Side**:
-    - Remove demo routes in `server/src/routes/users.js`
-    - Update `server/src/routes/index.js`
-    - Modify or remove `server/src/models/user.js`
-    - Add your own models and routes
+    - Add your own models and routes in `server/src/models/` and `server/src/routes/`
+    - Update `server/src/routes/index.js` to register your routes
 
 ### Styling
 

@@ -4,17 +4,20 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 
 ## 🚀 Features
 
--   **Modern Stack**: React, Node.js, Express, MongoDB with TypeScript
--   **Type Safety**: Full TypeScript support with strict type checking
--   **Development Tools**: Hot reload, ESLint with TypeScript, Vite
--   **UI Components**: Tailwind CSS with typed custom components
--   **Testing**: Vitest with React Testing Library and TypeScript
--   **Security**: JWT Authentication, Helmet, CORS, Rate limiting, Compression, Query Sanitization
--   **Database**: MongoDB with Mongoose ODM and TypeScript schemas
--   **Validation**: Express Validator with TypeScript types
--   **Error Handling**: Centralized error handling with typed errors
--   **Logging**: Morgan for HTTP request logging
--   **Routing**: React Router for client-side routing with typed routes
+-   **Modern Stack**: React, Node.js, Express, MongoDB with full TypeScript support
+-   **Type Safety**: Strict TypeScript configuration with comprehensive type checking
+-   **Package Manager Support**: Works with bun, pnpm, yarn, or npm with TypeScript optimizations
+-   **Flexible Setup**: Client-only, server-only, or full-stack initialization with proper typing
+-   **Development Tools**: Hot reload, ESLint with TypeScript rules, Vite with fast refresh
+-   **UI Components**: Tailwind CSS v4 with typed custom components and dark mode
+-   **Security**: Helmet, CORS, Rate limiting, Compression with typed configurations
+-   **Database**: MongoDB with Mongoose ODM and comprehensive TypeScript schemas
+-   **Validation**: Express Validator with full TypeScript type inference
+-   **Error Handling**: Centralized error handling with typed error classes
+-   **Logging**: Morgan for HTTP request logging with typed middleware
+-   **Routing**: React Router with typed routes and parameters
+-   **Git Integration**: Automatic Git initialization with GitHub support
+-   **Production Ready**: Optimized TypeScript build configurations for deployment
 
 ## 📁 Project Structure
 
@@ -24,7 +27,8 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   ├── src/
 │   │   ├── assets/         # Static assets (.gitkeep)
 │   │   ├── components/     # Reusable UI components
-│   │   │   ├── ui/         # UI components (ThemeToggle)
+│   │   │   ├── ui/         # UI components
+│   │   │   │   └── ThemeToggle.tsx
 │   │   │   └── Navigation.tsx
 │   │   ├── config/         # Configuration files
 │   │   │   └── constants.ts
@@ -43,33 +47,43 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 │   ├── index.html          # HTML template
 │   ├── vite.config.ts      # Vite configuration (TypeScript)
 │   ├── tsconfig.json       # TypeScript configuration
+│   ├── tsconfig.app.json   # TypeScript app configuration
 │   ├── tsconfig.node.json  # TypeScript configuration for Node.js
+│   ├── eslint.config.js    # ESLint configuration
+│   ├── .prettierrc         # Prettier configuration
+│   ├── .prettierignore     # Prettier ignore file
+│   ├── .env.example        # Environment variables template
 │   └── package.json
 ├── server/                 # Express backend (TypeScript)
 │   ├── src/
-│   │   ├── config/         # Database configuration
-│   │   │   └── connectDB.ts
+│   │   ├── __tests__/      # Server tests
+│   │   │   ├── server.test.ts
+│   │   │   └── setup.ts
+│   │   ├── config/         # Database and app configuration
+│   │   │   ├── connectDB.ts
+│   │   │   └── validateEnv.ts
+│   │   ├── controllers/    # Request handlers (.gitkeep)
 │   │   ├── middleware/     # Custom middleware
-│   │   │   ├── authMiddleware.ts
-│   │   │   ├── errorMiddleware.ts
-│   │   │   └── querySanitizer.ts
-│   │   ├── models/         # Mongoose models with TypeScript interfaces
-│   │   │   └── user.ts
+│   │   │   └── errorMiddleware.ts
+│   │   ├── models/         # Mongoose models with TypeScript interfaces (.gitkeep)
 │   │   ├── routes/         # API routes
-│   │   │   ├── index.ts
-│   │   │   └── users.ts
+│   │   │   └── index.ts
 │   │   ├── types/          # TypeScript type definitions
 │   │   │   └── index.ts
-│   │   ├── utils/
-│   │   │   └── generateToken.ts
-│   │   ├── __tests__/      # Server tests
-│   │   │   └── server.test.ts
+│   │   ├── utils/          # Utility functions (.gitkeep)
+│   │   ├── validation/     # Input validation (empty)
 │   │   └── server.ts       # Server entry point
 │   ├── .env.example        # Environment variables template
-│   ├── vitest.config.ts    # Vitest configuration (TypeScript)
+│   ├── .env.test           # Test environment variables
+│   ├── jest.config.js      # Jest configuration
 │   ├── tsconfig.json       # TypeScript configuration
+│   ├── eslint.config.js    # ESLint configuration
+│   ├── .prettierrc         # Prettier configuration
+│   ├── .prettierignore     # Prettier ignore file
 │   └── package.json
-└── package.json           # Workspace configuration
+├── .gitignore              # Git ignore file
+├── package.json            # Workspace configuration
+└── README.md               # Project documentation
 ```
 
 ## 🛠️ Getting Started
@@ -77,16 +91,25 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
 ### Prerequisites
 
 -   **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
--   **npm**
+-   **Package Manager**: One of bun, pnpm, yarn, or npm (npm comes with Node.js)
 -   **MongoDB** (local or cloud) - [Download here](https://www.mongodb.com/try/download/community)
--   **TypeScript** knowledge recommended
+-   **Git** (optional, for repository initialization) - [Download here](https://git-scm.com/)
+-   **TypeScript** knowledge recommended for full development experience
 
 ### Installation
+
+The installation steps depend on how you initialized your project:
+
+#### For Full Stack (Both Client & Server)
 
 1. **Install dependencies**:
 
     ```bash
-    npm install
+    # Using your chosen package manager
+    npm install        # or
+    pnpm install       # or  
+    yarn install       # or
+    bun install
     ```
 
 2. **Set up environment variables**:
@@ -103,12 +126,30 @@ Stop wasting time on boilerplate — cma-cli instantly scaffolds a production-re
     NODE_ENV=development
     MONGODB_URI=mongodb://127.0.0.1:27017/your_app_name
     CORS_ORIGIN=http://localhost:5173
-    JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
     ```
 
 3. **Start development servers**:
     ```bash
-    npm run dev
+    npm run dev        # Starts both client and server with TypeScript compilation
+    ```
+
+#### For Client-Only Setup
+
+1. **Install dependencies and start**:
+    ```bash
+    npm install && npm run dev
+    ```
+
+#### For Server-Only Setup
+
+1. **Set up environment variables**:
+    ```bash
+    cp .env.example .env
+    ```
+
+2. **Install dependencies and start**:
+    ```bash
+    npm install && npm run dev
     ```
 
 This will start:
@@ -118,28 +159,49 @@ This will start:
 
 ## 📜 Available Scripts
 
-### Workspace Scripts
+The available scripts depend on your project setup:
 
--   `npm run dev` - Start both client and server in development mode
+### Full Stack (Both Client & Server)
+
+#### Workspace Scripts (from root directory)
+-   `npm run dev` - Start both client and server with TypeScript compilation
 -   `npm run build` - Build both client and server for production
 -   `npm run start` - Start production server
 -   `npm run test` - Run tests for server
 -   `npm run lint` - Lint both client and server code
+-   `npm run type-check` - Run TypeScript type checking for entire project
+
+#### Individual Component Scripts
+-   `npm run client` - Start only the client with TypeScript
+-   `npm run server` - Start only the server with TypeScript
+-   `npm run build --workspace client` - Build client for production
+-   `npm run preview --workspace client` - Preview production build
+-   `npm run type-check --workspace client` - Type check client code
+-   `npm run type-check --workspace server` - Type check server code
+
+### Client-Only Setup
+
+-   `npm run dev` - Start development server with TypeScript compilation
+-   `npm run build` - Build for production with TypeScript
+-   `npm run preview` - Preview production build
+-   `npm run lint` - Lint code with ESLint and TypeScript rules
 -   `npm run type-check` - Run TypeScript type checking
 
-### Client Scripts
+### Server-Only Setup
 
--   `npm run client` - Start only the client
--   `npm run build --workspace client` - Build client for production (includes TypeScript compilation)
--   `npm run preview --workspace client` - Preview production build
--   `npm run type-check --workspace client` - Run TypeScript type checking for client
+-   `npm run dev` - Start development server with TypeScript and hot reload
+-   `npm run build` - Compile TypeScript for production
+-   `npm run start` - Start production server
+-   `npm run test` - Run server tests with TypeScript
+-   `npm run lint` - Lint code with ESLint and TypeScript rules
+-   `npm run type-check` - Run TypeScript type checking
 
-### Server Scripts
+### Package Manager Specific Commands
 
--   `npm run server` - Start only the server
--   `npm run test --workspace server` - Run server tests
--   `npm run start --workspace server` - Start production server
--   `npm run type-check --workspace server` - Run TypeScript type checking for server
+Replace `npm` with your chosen package manager:
+-   **bun**: `bun run dev`, `bun install`, etc. (includes @types/bun automatically)
+-   **pnpm**: `pnpm dev`, `pnpm install`, etc.
+-   **yarn**: `yarn dev`, `yarn install`, etc.
 
 ## 🔧 Configuration
 
@@ -176,12 +238,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017/mern_app
 # Client URL for CORS
 CORS_ORIGIN=http://localhost:5173
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRE=30d
-
 # Security
-BCRYPT_ROUNDS=12
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
@@ -209,10 +266,8 @@ VITE_API_URL=http://localhost:8000
     - Update type definitions in `client/src/vite-env.d.ts` as needed
 
 2. **Server Side**:
-    - Remove demo routes in `server/src/routes/users.ts`
-    - Update `server/src/routes/index.ts`
-    - Modify or remove `server/src/models/user.ts`
-    - Add your own models, routes, and type definitions
+    - Add your own models, routes, and type definitions in respective directories
+    - Update `server/src/routes/index.ts` to register your routes
     - Update `server/src/types/index.ts` with your custom types
 
 ### TypeScript Best Practices
