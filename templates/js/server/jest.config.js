@@ -7,4 +7,5 @@ export default {
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
   transform: {},
+  extensionsToTreatAsEsm: [".js"],
 };

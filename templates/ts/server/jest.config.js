@@ -1,6 +1,6 @@
 /** @type {import("jest").Config} **/
 export default {
-  preset: "ts-jest",
+  preset: "ts-jest/presets/default-esm",
   testEnvironment: "node",
   setupFilesAfterEnv: ["<rootDir>/src/__tests__/setup.ts"],
   testMatch: ["**/__tests__/**/*.test.ts"],

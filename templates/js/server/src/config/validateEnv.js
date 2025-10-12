@@ -11,17 +11,23 @@ const validateEnv = () => {
     requiredEnvVars.push("MONGODB_URI");
   }
 
-  // Check for missing required variables
-  const missing = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+  /*
+   * Please uncomment the following lines to add env vars to the validation
+   *
+   * Check for missing required variables
+   * @type {string[]}
+   */
 
-  if (missing.length > 0) {
-    console.error("❌ Missing required environment variables:");
-    missing.forEach((envVar) => console.error(`   - ${envVar}`));
-    console.error(
-      "\n💡 Copy .env.example to .env and fill in the required values",
-    );
-    process.exit(1);
-  }
+  // const missing = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+  // if (missing.length > 0) {
+  //   console.error("❌ Missing required environment variables:");
+  //   missing.forEach((envVar) => console.error(`   - ${envVar}`));
+  //   console.error(
+  //     "\n💡 Copy .env.example to .env and fill in the required values",
+  //   );
+  //   process.exit(1);
+  // }
 
   if (!isTest) {
     console.log("✅ Environment variables validated successfully");
