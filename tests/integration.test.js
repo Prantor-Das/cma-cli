@@ -41,7 +41,29 @@ describe("Integration Tests", () => {
     fs.readJson.mockResolvedValue({ name: "test", scripts: {} });
     fs.writeJson.mockResolvedValue(undefined);
     fs.readdir.mockResolvedValue([]);
-    execa.mockResolvedValue({ stdout: "success" });
+
+    // Mock execa with realistic package manager responses
+    execa.mockImplementation((command, args) => {
+      // Package manager version checks
+      if (args && args.includes("--version")) {
+        return Promise.resolve({ stdout: "1.0.0" });
+      }
+      // Package manager health checks
+      if (command === "npm" && args && args.includes("config")) {
+        return Promise.resolve({ stdout: "https://registry.npmjs.org/" });
+      }
+      if (command === "yarn" && args && args.includes("cache")) {
+        return Promise.resolve({ stdout: "/path/to/cache" });
+      }
+      if (command === "pnpm" && args && args.includes("store")) {
+        return Promise.resolve({ stdout: "Store is clean" });
+      }
+      if (command === "bun" && args && args.includes("--help")) {
+        return Promise.resolve({ stdout: "Bun help text" });
+      }
+      // Default for other commands
+      return Promise.resolve({ stdout: "success" });
+    });
   });
 
   describe("Full Project Creation Workflows", () => {
@@ -351,8 +373,25 @@ describe("Integration Tests", () => {
 
       // Mock GitHub username detection
       execa.mockImplementation((command, args) => {
-        if (args.includes("github.user")) {
+        if (args && args.includes("github.user")) {
           return Promise.resolve({ stdout: "testuser" });
+        }
+        // Package manager version checks
+        if (args && args.includes("--version")) {
+          return Promise.resolve({ stdout: "1.0.0" });
+        }
+        // Package manager health checks
+        if (command === "npm" && args && args.includes("config")) {
+          return Promise.resolve({ stdout: "https://registry.npmjs.org/" });
+        }
+        if (command === "yarn" && args && args.includes("cache")) {
+          return Promise.resolve({ stdout: "/path/to/cache" });
+        }
+        if (command === "pnpm" && args && args.includes("store")) {
+          return Promise.resolve({ stdout: "Store is clean" });
+        }
+        if (command === "bun" && args && args.includes("--help")) {
+          return Promise.resolve({ stdout: "Bun help text" });
         }
         return Promise.resolve({ stdout: "success" });
       });
@@ -376,6 +415,23 @@ describe("Integration Tests", () => {
       execa.mockImplementation((command, args) => {
         if (command === "git") {
           return Promise.reject(new Error("Git not found"));
+        }
+        // Package manager version checks
+        if (args && args.includes("--version")) {
+          return Promise.resolve({ stdout: "1.0.0" });
+        }
+        // Package manager health checks
+        if (command === "npm" && args && args.includes("config")) {
+          return Promise.resolve({ stdout: "https://registry.npmjs.org/" });
+        }
+        if (command === "yarn" && args && args.includes("cache")) {
+          return Promise.resolve({ stdout: "/path/to/cache" });
+        }
+        if (command === "pnpm" && args && args.includes("store")) {
+          return Promise.resolve({ stdout: "Store is clean" });
+        }
+        if (command === "bun" && args && args.includes("--help")) {
+          return Promise.resolve({ stdout: "Bun help text" });
         }
         return Promise.resolve({ stdout: "success" });
       });

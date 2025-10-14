@@ -13,6 +13,21 @@ import {
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/constants";
 
+// Helper function to extract error message from unknown error
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "response" in error) {
+    const axiosError = error as { response?: { data?: { error?: string } } };
+    return axiosError.response?.data?.error || "API request failed";
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+}
+
 // Main Component
 
 export default function Demo() {
@@ -199,15 +214,12 @@ function ApiMessage() {
           loading: false,
           error: null,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("API fetch error:", error);
         setState({
           message: "",
           loading: false,
-          error:
-            error.response?.data?.error ||
-            error.message ||
-            "Failed to fetch from API",
+          error: getErrorMessage(error),
         });
       }
     };

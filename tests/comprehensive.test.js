@@ -76,8 +76,32 @@ describe("CMA CLI Comprehensive Tests", () => {
     fs.readdir.mockResolvedValue([]);
     fs.mkdir.mockResolvedValue(undefined);
 
-    // Mock execa for git and package manager commands
-    execa.mockResolvedValue({ stdout: "1.0.0" });
+    // Mock execa for git and package manager commands with realistic responses
+    execa.mockImplementation((command, args) => {
+      // Package manager version checks
+      if (args && args.includes("--version")) {
+        return Promise.resolve({ stdout: "1.0.0" });
+      }
+      // Package manager health checks
+      if (command === "npm" && args && args.includes("config")) {
+        return Promise.resolve({ stdout: "https://registry.npmjs.org/" });
+      }
+      if (command === "yarn" && args && args.includes("cache")) {
+        return Promise.resolve({ stdout: "/path/to/cache" });
+      }
+      if (command === "pnpm" && args && args.includes("store")) {
+        return Promise.resolve({ stdout: "Store is clean" });
+      }
+      if (command === "bun" && args && args.includes("--help")) {
+        return Promise.resolve({ stdout: "Bun help text" });
+      }
+      // Git commands
+      if (command === "git") {
+        return Promise.resolve({ stdout: "git output" });
+      }
+      // Default for other commands
+      return Promise.resolve({ stdout: "1.0.0" });
+    });
   });
 
   afterEach(async () => {

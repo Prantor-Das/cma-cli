@@ -142,6 +142,11 @@ async function displayNextSteps(config, packageManager, needsShellSetup) {
   }
 
   console.log(chalk.green.bold("\n🚀 Happy coding!\n"));
+  console.log(
+    chalk.gray.italic(
+      "Heads up: testing and linting might be a bit unstable right now. We're on it!",
+    ),
+  );
 }
 
 function displaySeparateCommands(config, installCmd, devCmd, startCmd) {

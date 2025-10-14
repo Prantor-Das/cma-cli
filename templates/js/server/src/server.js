@@ -32,7 +32,9 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser()); // Parse cookies
 
 // CORS configuration - allow specific origins
-const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || ["http://localhost:5173"];
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [
+  "http://localhost:5173",
+];
 
 app.use(
   cors({

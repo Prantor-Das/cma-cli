@@ -11,7 +11,7 @@ const validateEnv = (): void => {
     requiredEnvVars.push("MONGODB_URI");
   }
 
-    /*
+  /*
    * Please uncomment the following lines to add env vars to the validation
    *
    * Check for missing required variables

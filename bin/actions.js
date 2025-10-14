@@ -975,10 +975,12 @@ export async function createProject(config) {
       config.initializeParts,
     );
 
-    if (config.concurrently) {
+    // Update workspace scripts for the chosen package manager when we have both client and server
+    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
       await updateConcurrentlyScripts(
         path.join(projectPath, "package.json"),
         packageManager,
+        config.concurrently,
       );
     }
 

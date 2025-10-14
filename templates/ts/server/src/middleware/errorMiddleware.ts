@@ -14,7 +14,7 @@ export const notFound = (
 
 // Global error handler - formats and sends error responses
 export const errorHandler = (
-  err: any,
+  err: Error & { code?: number; errors?: Record<string, { message: string }> },
   req: Request,
   res: Response,
   _next: NextFunction,
@@ -35,8 +35,8 @@ export const errorHandler = (
 
   if (err.name === "ValidationError") {
     statusCode = 400;
-    message = Object.values(err.errors)
-      .map((val: any) => val.message)
+    message = Object.values(err.errors || {})
+      .map((val) => val.message)
       .join(", ");
   }
 

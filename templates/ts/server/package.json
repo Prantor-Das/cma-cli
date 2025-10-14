@@ -23,6 +23,7 @@
   "license": "ISC",
   "private": true,
   "devDependencies": {
+    "@eslint/js": "^9.36.0",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.19",
@@ -42,7 +43,6 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   },
-
   "dependencies": {
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
