@@ -1,6 +1,6 @@
 import { describe, it, expect } from "@jest/globals";
 import request from "supertest";
-import app from "../server.js";
+import app from "../server";
 
 describe("Server API", () => {
   describe("GET /health", () => {

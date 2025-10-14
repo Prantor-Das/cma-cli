@@ -8,9 +8,9 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p .",
-    "test": "NODE_ENV=test jest --runInBand",
-    "test:watch": "NODE_ENV=test jest --watch --runInBand",
-    "test:coverage": "NODE_ENV=test jest --coverage --runInBand",
+    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test:watch": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watch --runInBand",
+    "test:coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --coverage --runInBand",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -39,11 +39,10 @@
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.4",
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.6"
-  },
-  "peerDependencies": {
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   },
+
   "dependencies": {
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",

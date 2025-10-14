@@ -8,12 +8,10 @@ export default {
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
   extensionsToTreatAsEsm: [".ts"],
-  globals: {
-    "ts-jest": {
-      useESM: true,
-    },
+  transform: {
+    "^.+\\.ts$": ["ts-jest", { useESM: true }],
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
 };
