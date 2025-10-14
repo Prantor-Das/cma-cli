@@ -4,7 +4,7 @@ const FolderStructure = () => {
     return (
         <section className="py-20">
             <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">
+                <h2 className="text-3xl md:text-4xl font-bold space-font">
                     Folder Structure
                 </h2>
                 <p className="text-zinc-500 dark:text-zinc-400 mt-2">

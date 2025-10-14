@@ -13,6 +13,21 @@ import {
 import axios from "axios";
 import { API_ENDPOINTS } from "../config/constants";
 
+// Helper function to extract error message from unknown error
+function getErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "response" in error) {
+    const axiosError = error as { response?: { data?: { error?: string } } };
+    return axiosError.response?.data?.error || "API request failed";
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  return "An unexpected error occurred";
+}
+
 // Main Component
 
 export default function Demo() {
@@ -22,7 +37,7 @@ export default function Demo() {
       <div className="space-y-4 max-w-5xl mx-auto flex items-center justify-between flex-col sm:flex-row ">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
-            MERN Stack Starter
+            cma-cli
           </h1>
           <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
             Instantly scaffold a production-ready MERN stack app with clean
@@ -36,7 +51,7 @@ export default function Demo() {
             rel="noopener noreferrer"
             className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
           >
-            View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
+            Star on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
           </a>
           <a
             href="https://npmjs.com/package/cma-cli"
@@ -85,7 +100,7 @@ export default function Demo() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
             Getting Started Guide
           </h2>
-          <p className="text-gray-600 dark:text-zinc-400 text-lg">
+          <p className="text-gray-600 dark:text-zinc-400">
             Follow these steps to customize your MERN stack application and make
             it your own
           </p>
@@ -122,22 +137,10 @@ export default function Demo() {
                   "Rename .env.example to .env and set your server configurations",
               },
               {
-                title: "Database Models",
-                code: "server/src/models/",
+                title: "Server Entry Point",
+                code: "server/server.ts",
                 description:
-                  "Create or modify models for your data structure (remove User model if not needed)",
-              },
-              {
-                title: "Remove Demo Api Routes",
-                code: "server/src/routes/users.js",
-                description:
-                  "Delete or modify sample auth and user routes. Create routes specific to your app",
-              },
-              {
-                title: "Update Route Index",
-                code: "server/src/routes/index.js",
-                description:
-                  "Register your new routes and remove unused demo route imports",
+                  "Main Express file that initializes the backend, connects to MongoDB, and registers routes and middleware.",
               },
             ]}
           />
@@ -211,15 +214,12 @@ function ApiMessage() {
           loading: false,
           error: null,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("API fetch error:", error);
         setState({
           message: "",
           loading: false,
-          error:
-            error.response?.data?.error ||
-            error.message ||
-            "Failed to fetch from API",
+          error: getErrorMessage(error),
         });
       }
     };

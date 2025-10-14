@@ -12,13 +12,15 @@ A simple and powerful CLI tool to scaffold a modern MERN stack application with 
 ## Features
 
 - **Interactive CLI:** An easy-to-use command-line interface to get you started in seconds.
-- **JavaScript & TypeScript:** Choose between a JavaScript or a TypeScript template.
-- **Modern Stack:** React, Node.js, Express, and MongoDB.
-- **Vite Powered:** A fast and modern build tool for the frontend.
-- **Tailwind CSS:** A utility-first CSS framework for rapid UI development.
-- **Dark Mode:** The templates come with a pre-configured dark mode.
-- **Server & Client Structure:** A clean and separated structure for the client and server.
-- **Example API:** An example API endpoint to get you started.
+- **Flexible Initialization:** Choose to initialize client-only, server-only, or both parts of your MERN stack.
+- **JavaScript & TypeScript:** Choose between a JavaScript or a TypeScript template with full type safety.
+- **Modern Stack:** React, Node.js, Express, and MongoDB with the latest best practices.
+- **Multiple Package Managers:** Support for bun, pnpm, yarn, and npm with intelligent detection and fallback.
+- **Vite Powered:** A fast and modern build tool for the frontend with hot reload.
+- **Tailwind CSS v4:** A utility-first CSS framework with built-in dark mode support.
+- **Git Integration:** Automatic Git repository initialization with GitHub integration.
+- **Concurrent Development:** Optional setup to run both client and server simultaneously.
+- **Production Ready:** Security middleware, error handling, and optimization out of the box.
 
 ## Installation  
 
@@ -44,22 +46,36 @@ cma-cli
 
 The CLI will then prompt you with a few questions to configure your project:
 
-1.  **Project Name:** The name of your project.
+1.  **Project Name:** The name of your project (use "./" for current directory).
 2.  **Language:** Choose between JavaScript and TypeScript.
-3.  **Concurrently:** Set up scripts to run both client and server simultaneously.
-4.  **Install Dependencies:** Automatically install all dependencies.
-5.  **Initialize Git:** Initialize a new git repository.
+3.  **Package Manager:** Select from bun, pnpm, yarn, or npm (automatically detects available options).
+4.  **Initialize Parts:** Choose to initialize client-only, server-only, or both parts.
+5.  **Concurrently:** Set up scripts to run both client and server simultaneously (when both parts are selected).
+6.  **Install Dependencies:** Automatically install all dependencies.
+7.  **Initialize Git:** Initialize a new git repository with optional GitHub integration.
 
 After the setup is complete, you can navigate to your new project and start the development server.
 
-## Templates
+## Templates & Initialization Options
 
-`cma-cli` provides two templates:
+`cma-cli` provides flexible templates with multiple initialization options:
 
+### Language Templates
 - **JavaScript:** A complete MERN stack template using JavaScript.
-- **TypeScript:** A fully type-safe MERN stack template using TypeScript.
+- **TypeScript:** A fully type-safe MERN stack template with strict TypeScript configuration.
 
-Both templates include a client-side built with React and Vite, and a server-side built with Node.js, Express, and Mongoose.
+### Initialization Options
+- **Full Stack (Both):** Complete MERN stack with both client and server in separate directories.
+- **Client Only:** React frontend with Vite, Tailwind CSS, and routing (no backend).
+- **Server Only:** Express backend with MongoDB, security middleware, and API structure (no frontend).
+
+### Package Manager Support
+- **bun** ⚡ Fastest - Ultra-fast JavaScript runtime and package manager
+- **pnpm** 🚀 Very Fast - Efficient disk space usage with symlinks
+- **yarn** ⚡ Fast - Reliable dependency management with offline support
+- **npm** 📦 Standard - The default Node.js package manager
+
+All templates include production-ready configurations, testing setup, and development tools optimized for your chosen package manager.
 
 ## Contributing
 

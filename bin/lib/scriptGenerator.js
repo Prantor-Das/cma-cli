@@ -1,5 +1,4 @@
 import { getPackageName } from "./projectDetector.js";
-import { CONCURRENTLY_DEPENDENCIES } from "./constants.js";
 import { readPackageJson, writePackageJson } from "./utils.js";
 import chalk from "chalk";
 import path from "path";
@@ -11,14 +10,13 @@ class ScriptGenerator {
     this.managerCmd = packageManager.command;
   }
 
-  async generatePnpmScripts(projectPath) {
+  async generatePnpmScripts(projectPath, concurrently = true) {
     const clientPackageName = await getPackageName(projectPath, "client");
     const serverPackageName = await getPackageName(projectPath, "server");
 
-    return {
+    const scripts = {
       client: `${this.managerCmd} --filter ${clientPackageName} dev`,
       server: `${this.managerCmd} --filter ${serverPackageName} dev`,
-      dev: `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`,
       build: `${this.managerCmd} --filter ${clientPackageName} build && ${this.managerCmd} --filter ${serverPackageName} build`,
       start: `${this.managerCmd} --filter ${serverPackageName} start`,
       test: `${this.managerCmd} --filter ${clientPackageName} test && ${this.managerCmd} --filter ${serverPackageName} test`,
@@ -31,16 +29,25 @@ class ScriptGenerator {
       "format:backend": `${this.managerCmd} --filter ${serverPackageName} format`,
       clean: `${this.managerCmd} --filter ${clientPackageName} clean && ${this.managerCmd} --filter ${serverPackageName} clean`,
     };
+
+    // Always update dev script to use correct package manager
+    if (concurrently) {
+      scripts.dev = `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`;
+    } else {
+      // Remove dev script when not using concurrently
+      scripts.dev = undefined;
+    }
+
+    return scripts;
   }
 
-  async generateYarnScripts(projectPath) {
+  async generateYarnScripts(projectPath, concurrently = true) {
     const clientPackageName = await getPackageName(projectPath, "client");
     const serverPackageName = await getPackageName(projectPath, "server");
 
-    return {
+    const scripts = {
       client: `${this.managerCmd} workspace ${clientPackageName} dev`,
       server: `${this.managerCmd} workspace ${serverPackageName} dev`,
-      dev: `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`,
       build: `${this.managerCmd} workspace ${clientPackageName} build && ${this.managerCmd} workspace ${serverPackageName} build`,
       start: `${this.managerCmd} workspace ${serverPackageName} start`,
       test: `${this.managerCmd} workspace ${clientPackageName} test && ${this.managerCmd} workspace ${serverPackageName} test`,
@@ -53,16 +60,25 @@ class ScriptGenerator {
       "format:backend": `${this.managerCmd} workspace ${serverPackageName} format`,
       clean: `${this.managerCmd} workspace ${clientPackageName} clean && ${this.managerCmd} workspace ${serverPackageName} clean`,
     };
+
+    // Always update dev script to use correct package manager
+    if (concurrently) {
+      scripts.dev = `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`;
+    } else {
+      // Remove dev script when not using concurrently
+      scripts.dev = undefined;
+    }
+
+    return scripts;
   }
 
-  async generateBunScripts(projectPath) {
+  async generateBunScripts(projectPath, concurrently = true) {
     const clientPackageName = await getPackageName(projectPath, "client");
     const serverPackageName = await getPackageName(projectPath, "server");
 
-    return {
+    const scripts = {
       client: `${this.managerCmd} --filter ${clientPackageName} dev`,
       server: `${this.managerCmd} --filter ${serverPackageName} dev`,
-      dev: `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`,
       build: `${this.managerCmd} --filter ${clientPackageName} build && ${this.managerCmd} --filter ${serverPackageName} build`,
       start: `${this.managerCmd} --filter ${serverPackageName} start`,
       test: `${this.managerCmd} --filter ${clientPackageName} test && ${this.managerCmd} --filter ${serverPackageName} test`,
@@ -75,13 +91,22 @@ class ScriptGenerator {
       "format:backend": `${this.managerCmd} --filter ${serverPackageName} format`,
       clean: `${this.managerCmd} --filter ${clientPackageName} clean && ${this.managerCmd} --filter ${serverPackageName} clean`,
     };
+
+    // Always update dev script to use correct package manager
+    if (concurrently) {
+      scripts.dev = `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`;
+    } else {
+      // Remove dev script when not using concurrently
+      scripts.dev = undefined;
+    }
+
+    return scripts;
   }
 
-  generateNpmScripts() {
-    return {
+  generateNpmScripts(concurrently = true) {
+    const scripts = {
       client: `${this.managerCmd} run dev --workspace client`,
       server: `${this.managerCmd} run dev --workspace server`,
-      dev: `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`,
       build: `${this.managerCmd} run build --workspace client && ${this.managerCmd} run build --workspace server`,
       start: `${this.managerCmd} run start --workspace server`,
       test: `${this.managerCmd} run test --workspace client && ${this.managerCmd} run test --workspace server`,
@@ -94,18 +119,28 @@ class ScriptGenerator {
       "format:backend": `${this.managerCmd} run format --workspace server`,
       clean: `${this.managerCmd} run clean --workspace client && ${this.managerCmd} run clean --workspace server`,
     };
+
+    // Always update dev script to use correct package manager
+    if (concurrently) {
+      scripts.dev = `concurrently -n server,client -c green,blue "${this.managerCmd} run server" "${this.managerCmd} run client"`;
+    } else {
+      // Remove dev script when not using concurrently
+      scripts.dev = undefined;
+    }
+
+    return scripts;
   }
 
-  async generateScripts(projectPath) {
+  async generateScripts(projectPath, concurrently = true) {
     switch (this.packageManager.name) {
       case "pnpm":
-        return await this.generatePnpmScripts(projectPath);
+        return await this.generatePnpmScripts(projectPath, concurrently);
       case "yarn":
-        return await this.generateYarnScripts(projectPath);
+        return await this.generateYarnScripts(projectPath, concurrently);
       case "bun":
-        return await this.generateBunScripts(projectPath);
+        return await this.generateBunScripts(projectPath, concurrently);
       default:
-        return this.generateNpmScripts();
+        return this.generateNpmScripts(concurrently);
     }
   }
 }
@@ -113,6 +148,7 @@ class ScriptGenerator {
 export async function updateConcurrentlyScripts(
   packageJsonPath,
   packageManager,
+  concurrently = true,
 ) {
   const packageJson = await readPackageJson(packageJsonPath);
 
@@ -122,16 +158,22 @@ export async function updateConcurrentlyScripts(
 
   const generator = new ScriptGenerator(packageManager);
   const projectPath = path.dirname(packageJsonPath);
-  const scripts = await generator.generateScripts(projectPath);
+  const scripts = await generator.generateScripts(projectPath, concurrently);
 
-  Object.assign(packageJson.scripts, scripts);
+  // Assign scripts, deleting any that are undefined
+  Object.keys(scripts).forEach((key) => {
+    if (scripts[key] === undefined) {
+      delete packageJson.scripts[key];
+    } else {
+      packageJson.scripts[key] = scripts[key];
+    }
+  });
 
   if (packageManager.name === "pnpm") {
     delete packageJson.workspaces;
     await createPnpmConfig(projectPath);
   }
 
-  await addConcurrentlyDependencies(packageJson, packageManager);
   await writePackageJson(packageJsonPath, packageJson);
 }
 
@@ -139,65 +181,25 @@ async function createPnpmConfig(projectPath) {
   const npmrcPath = path.join(projectPath, ".npmrc");
 
   const pnpmConfig = `# PNPM Configuration for MERN workspace
-# Maximum hoisting to resolve all dependency issues
-hoist-pattern[]=*
-public-hoist-pattern[]=*
-shamefully-hoist=true
+# Minimal hoisting for workspace compatibility
 strict-peer-dependencies=false
 auto-install-peers=true
 
-# Resolve dependency conflicts aggressively
-prefer-workspace-packages=false
-link-workspace-packages=false
-legacy-peer-deps=true
+# Workspace settings
+prefer-workspace-packages=true
+link-workspace-packages=true
 
-# Additional compatibility settings
-node-linker=hoisted
-symlink=false
-package-import-method=hardlink
+# Hoist only essential packages for TypeScript compatibility
+hoist-pattern[]=@types/*
+public-hoist-pattern[]=@types/*
 `;
 
   try {
     await fs.writeFile(npmrcPath, pnpmConfig, "utf8");
-    console.log(
-      chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"),
-    );
+    // console.log(
+    //   chalk.blue("▸ Created .npmrc configuration for pnpm compatibility"),
+    // );
   } catch (error) {
-    console.warn(chalk.yellow(`⚠️  Could not create .npmrc: ${error.message}`));
+    // console.warn(chalk.yellow(`⚠️  Could not create .npmrc: ${error.message}`));
   }
-}
-
-async function addConcurrentlyDependencies(packageJson, packageManager) {
-  if (
-    !packageJson.devDependencies?.concurrently &&
-    !packageJson.dependencies?.concurrently
-  ) {
-    return;
-  }
-
-  if (!packageJson.devDependencies) {
-    packageJson.devDependencies = {};
-  }
-
-  const addedDeps = [];
-
-  for (const [depName, depVersion] of Object.entries(
-    CONCURRENTLY_DEPENDENCIES,
-  )) {
-    const missingInDev = !packageJson.devDependencies[depName];
-    const missingInProd = !packageJson.dependencies?.[depName];
-
-    if (missingInDev && missingInProd) {
-      packageJson.devDependencies[depName] = depVersion;
-      addedDeps.push(depName);
-    }
-  }
-
-  // if (addedDeps.length > 0) {
-  //   console.log(
-  //     chalk.blue(
-  //       `▸ Adding concurrently dependencies for ${packageManager.name} compatibility: ${addedDeps.join(', ')}`
-  //     )
-  //   );
-  // }
 }

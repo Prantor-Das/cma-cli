@@ -4,8 +4,28 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Providers } from "./providers";
 
+import { Space_Grotesk, Figtree, JetBrains_Mono } from "next/font/google";
+
+const space = Space_Grotesk({
+    variable: "--font-space",
+    subsets: ["latin"],
+    display: "swap",
+});
+
+const figtree = Figtree({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-figtree",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-jetbrains",
+});
+
 export const metadata = {
-    title: "cma-cli - Create MERN App",
+    title: "cma-cli",
     description:
         "A simple and powerful CLI tool to scaffold a modern MERN stack application with a single command.",
     keywords: [
@@ -79,7 +99,9 @@ export default function RootLayout({ children }) {
             <head>
                 <link rel="icon" type="image" href="/logo.png" />
             </head>
-            <body className={`antialiased bg-zinc-50 dark:bg-zinc-950`}>
+            <body
+                className={`antialiased bg-zinc-50 dark:bg-zinc-950 ${figtree.className} ${space.variable} ${jetbrainsMono.variable}`}
+            >
                 <Providers>
                     <Header />
                     <main>{children}</main>

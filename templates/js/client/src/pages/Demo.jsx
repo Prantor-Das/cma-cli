@@ -21,7 +21,7 @@ export default function Demo() {
       <div className="space-y-4 max-w-5xl mx-auto flex items-center justify-between flex-col sm:flex-row ">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
-            MERN Stack Starter
+            cma-cli
           </h1>
           <p className="text-gray-600 dark:text-zinc-400 md:w-2/3">
             Instantly scaffold a production-ready MERN stack app with clean
@@ -35,7 +35,7 @@ export default function Demo() {
             rel="noopener noreferrer"
             className="inline-flex justify-center items-center px-4 py-2 bg-gray-900 text-white dark:bg-zinc-100 dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition w-full border border-zinc-900 dark:border-zinc-100"
           >
-            View on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
+            Star on GitHub <ArrowUpRight className="w-4 h-4 ml-1" />
           </a>
           <a
             href="https://npmjs.com/package/cma-cli"
@@ -84,7 +84,7 @@ export default function Demo() {
           <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
             Getting Started Guide
           </h2>
-          <p className="text-gray-600 dark:text-zinc-400 text-lg">
+          <p className="text-gray-600 dark:text-zinc-400">
             Follow these steps to customize your MERN stack application and make
             it your own
           </p>
@@ -121,22 +121,10 @@ export default function Demo() {
                   "Rename .env.example to .env and set your server configurations",
               },
               {
-                title: "Database Models",
-                code: "server/src/models/",
+                title: "Server Entry Point",
+                code: "server/server.js",
                 description:
-                  "Create or modify models for your data structure (remove User model if not needed)",
-              },
-              {
-                title: "Remove Demo Api Routes",
-                code: "server/src/routes/users.js",
-                description:
-                  "Delete or modify sample auth and user routes. Create routes specific to your app",
-              },
-              {
-                title: "Update Route Index",
-                code: "server/src/routes/index.js",
-                description:
-                  "Register your new routes and remove unused demo route imports",
+                  "Main Express file that initializes the backend, connects to MongoDB, and registers routes and middleware.",
               },
             ]}
           />

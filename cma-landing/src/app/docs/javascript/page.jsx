@@ -1,13 +1,14 @@
 export default function JavascriptPage() {
     return (
         <div>
-            <header className="space-y-4 mb-12">
+            <header className="space-y-4 mb-8">
                 <h1 className="text-4xl font-bold tracking-tight">
                     JavaScript Template
                 </h1>
                 <p className="text-lg text-zinc-600 dark:text-zinc-400">
                     The JavaScript template provides a solid foundation for your
-                    MERN stack application.
+                    MERN stack application with modern features and flexible
+                    initialization options.
                 </p>
                 <hr className="border-zinc-200 dark:border-zinc-800" />
             </header>
@@ -40,12 +41,28 @@ export default function JavascriptPage() {
                                     where routing is handled.
                                 </li>
                                 <li>
+                                    <b>`src/Layout.jsx`</b>: Layout wrapper
+                                    component with navigation and theme support.
+                                </li>
+                                <li>
                                     <b>`src/pages/`</b>: Contains the page
-                                    components for different routes.
+                                    components (Demo.jsx, NotFound.jsx).
                                 </li>
                                 <li>
                                     <b>`src/components/`</b>: Reusable React
-                                    components.
+                                    components including Navigation.jsx.
+                                </li>
+                                <li>
+                                    <b>`src/components/ui/`</b>: UI components
+                                    like ThemeToggle.jsx.
+                                </li>
+                                <li>
+                                    <b>`src/hooks/`</b>: Custom React hooks
+                                    (useTheme.js).
+                                </li>
+                                <li>
+                                    <b>`src/config/`</b>: Configuration files
+                                    (constants.js).
                                 </li>
                                 <li>
                                     <b>`src/global.css`</b>: Global styles and
@@ -54,6 +71,10 @@ export default function JavascriptPage() {
                                 <li>
                                     <b>`vite.config.js`</b>: Vite configuration
                                     file.
+                                </li>
+                                <li>
+                                    <b>`eslint.config.js`</b>: ESLint
+                                    configuration with modern flat config.
                                 </li>
                             </ul>
                         </div>
@@ -116,27 +137,36 @@ export default function JavascriptPage() {
                             <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400">
                                 <li>
                                     <b>axios</b>: For making HTTP requests to
-                                    the backend API.
+                                    the backend API (full-stack only).
                                 </li>
                                 <li>
                                     <b>lucide-react</b>: A library of simply
-                                    beautiful icons.
+                                    beautiful icons for modern UI.
                                 </li>
                                 <li>
                                     <b>react</b>: A JavaScript library for
-                                    building user interfaces.
+                                    building user interfaces (v18+).
                                 </li>
                                 <li>
                                     <b>react-dom</b>: Serves as the entry point
                                     to the DOM and server renderers for React.
                                 </li>
                                 <li>
-                                    <b>react-router</b>: For handling routing in
-                                    the React application.
+                                    <b>react-router-dom</b>: For handling
+                                    client-side routing in the React application
+                                    (v6).
                                 </li>
                                 <li>
                                     <b>tailwindcss</b>: A utility-first CSS
-                                    framework for rapid UI development.
+                                    framework v4 with built-in dark mode.
+                                </li>
+                                <li>
+                                    <b>vite</b>: Fast build tool with hot module
+                                    replacement.
+                                </li>
+                                <li>
+                                    <b>vitest</b>: Fast unit testing framework
+                                    for Vite projects.
                                 </li>
                             </ul>
                         </div>
@@ -210,19 +240,36 @@ export default function JavascriptPage() {
                                     connection logic.
                                 </li>
                                 <li>
-                                    <b>`src/models/`</b>: Mongoose schemas for
-                                    your database models.
+                                    <b>`src/config/validateEnv.js`</b>:
+                                    Environment variable validation.
                                 </li>
                                 <li>
-                                    <b>`src/routes/`</b>: API route definitions.
+                                    <b>`src/models/`</b>: Mongoose schemas for
+                                    your database models (.gitkeep).
+                                </li>
+                                <li>
+                                    <b>`src/routes/`</b>: API route definitions
+                                    (index.js with health check).
                                 </li>
                                 <li>
                                     <b>`src/middleware/`</b>: Custom middleware
-                                    for authentication, error handling, etc.
+                                    for error handling (errorMiddleware.js).
                                 </li>
                                 <li>
-                                    <b>`src/controllers/`</b>: (Optional) Logic
-                                    for handling requests and responses.
+                                    <b>`src/controllers/`</b>: Request handlers
+                                    (.gitkeep for future use).
+                                </li>
+                                <li>
+                                    <b>`src/validation/`</b>: Input validation
+                                    handlers (validationHandler.js).
+                                </li>
+                                <li>
+                                    <b>`src/__tests__/`</b>: Server tests with
+                                    setup configuration.
+                                </li>
+                                <li>
+                                    <b>`src/utils/`</b>: Utility functions
+                                    (.gitkeep for future use).
                                 </li>
                             </ul>
                         </div>
@@ -277,15 +324,12 @@ export default function JavascriptPage() {
                             </h4>
                             <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400">
                                 <li>
-                                    <b>bcryptjs</b>: For hashing passwords.
-                                </li>
-                                <li>
                                     <b>compression</b>: For compressing HTTP
-                                    responses.
+                                    responses to improve performance.
                                 </li>
                                 <li>
                                     <b>cors</b>: For enabling Cross-Origin
-                                    Resource Sharing.
+                                    Resource Sharing with configurable options.
                                 </li>
                                 <li>
                                     <b>dotenv</b>: For loading environment
@@ -297,26 +341,32 @@ export default function JavascriptPage() {
                                 </li>
                                 <li>
                                     <b>express-rate-limit</b>: For rate-limiting
-                                    requests to the API.
+                                    requests to prevent abuse.
                                 </li>
                                 <li>
-                                    <b>express-validator</b>: For validating
-                                    incoming request data.
+                                    <b>express-validator</b>: For validating and
+                                    sanitizing incoming request data.
                                 </li>
                                 <li>
                                     <b>helmet</b>: For securing Express apps by
-                                    setting various HTTP headers.
-                                </li>
-                                <li>
-                                    <b>jsonwebtoken</b>: For generating and
-                                    verifying JSON Web Tokens.
+                                    setting security-related HTTP headers.
                                 </li>
                                 <li>
                                     <b>mongoose</b>: An Object Data Modeling
-                                    (ODM) library for MongoDB.
+                                    (ODM) library for MongoDB with schema
+                                    validation.
                                 </li>
                                 <li>
-                                    <b>morgan</b>: For logging HTTP requests.
+                                    <b>morgan</b>: For logging HTTP requests in
+                                    development.
+                                </li>
+                                <li>
+                                    <b>nodemon</b>: For automatic server restart
+                                    during development.
+                                </li>
+                                <li>
+                                    <b>vitest</b>: Fast testing framework for
+                                    server-side code.
                                 </li>
                             </ul>
                         </div>
@@ -368,19 +418,10 @@ export default function JavascriptPage() {
                                     </tr>
                                     <tr>
                                         <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            `CLIENT_URL`
+                                            `CORS_ORIGIN`
                                         </td>
                                         <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
                                             The URL of the client application.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            `JWT_SECRET`
-                                        </td>
-                                        <td className="border-b border-zinc-200 dark:border-zinc-800 p-2">
-                                            A secret key for signing JSON Web
-                                            Tokens.
                                         </td>
                                     </tr>
                                 </tbody>

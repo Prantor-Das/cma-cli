@@ -76,160 +76,267 @@ function validateAndNormalizeProjectName(projectName) {
   return normalized;
 }
 
-async function removeHelperRoutes(projectPath, concurrently, initializeParts) {
-  // console.log(createProgressMessage("Removing helper routes..."));
+async function removeServerContentFromDemo(projectPath) {
+  // For client-only setup, remove server-related content from Demo files
+  const demoJsxPath = path.join(projectPath, "src", "pages", "Demo.jsx");
+  const demoTsxPath = path.join(projectPath, "src", "pages", "Demo.tsx");
 
-  const serverPaths = [];
-
-  // Determine server paths to process
-  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-    serverPaths.push(path.join(projectPath, "server"));
-  } else if (initializeParts === INIT_PARTS.SERVER) {
-    // For server-only setup, server files are in project root
-    serverPaths.push(projectPath);
+  if (await fs.pathExists(demoJsxPath)) {
+    await updateDemoFileForClientOnly(demoJsxPath, false);
   }
 
-  for (const serverPath of serverPaths) {
-    const filesToRemove = [
-      path.join(serverPath, "src", "middleware", "authMiddleware.js"),
-      path.join(serverPath, "src", "middleware", "authMiddleware.ts"),
-      path.join(serverPath, "src", "models", "user.js"),
-      path.join(serverPath, "src", "models", "user.ts"),
-      path.join(serverPath, "src", "routes", "users.js"),
-      path.join(serverPath, "src", "routes", "users.ts"),
-      path.join(serverPath, "src", "utils", "generateToken.js"),
-      path.join(serverPath, "src", "utils", "generateToken.ts"),
-    ];
-
-    for (const filePath of filesToRemove) {
-      if (await fs.pathExists(filePath)) {
-        await fs.remove(filePath);
-        // console.log(
-        //     chalk.gray(
-        //         `   ✓ Removed ${path.relative(projectPath, filePath)}`,
-        //     ),
-        // );
-      }
-    }
-
-    // Update the index route file to remove users import and route
-    const indexRouteJs = path.join(serverPath, "src", "routes", "index.js");
-    const indexRouteTs = path.join(serverPath, "src", "routes", "index.ts");
-
-    if (await fs.pathExists(indexRouteJs)) {
-      await updateIndexRoute(indexRouteJs);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, indexRouteJs)}`,
-      //     ),
-      // );
-    }
-
-    if (await fs.pathExists(indexRouteTs)) {
-      await updateIndexRoute(indexRouteTs);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, indexRouteTs)}`,
-      //     ),
-      // );
-    }
+  if (await fs.pathExists(demoTsxPath)) {
+    await updateDemoFileForClientOnly(demoTsxPath, true);
   }
 
-  // Update Demo files in client to remove helper route references
-  const clientPaths = [];
+  // Also update constants file to remove API_ENDPOINTS
+  const constantsJsPath = path.join(
+    projectPath,
+    "src",
+    "config",
+    "constants.js",
+  );
+  const constantsTsPath = path.join(
+    projectPath,
+    "src",
+    "config",
+    "constants.ts",
+  );
 
-  // Determine client paths to process
-  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
-    clientPaths.push(path.join(projectPath, "client"));
-  } else if (initializeParts === INIT_PARTS.CLIENT) {
-    // For client-only setup, client files are in project root
-    clientPaths.push(projectPath);
+  if (await fs.pathExists(constantsJsPath)) {
+    await updateConstantsFileForClientOnly(constantsJsPath, false);
   }
 
-  for (const clientPath of clientPaths) {
-    const demoJsxPath = path.join(clientPath, "src", "pages", "Demo.jsx");
-    const demoTsxPath = path.join(clientPath, "src", "pages", "Demo.tsx");
+  if (await fs.pathExists(constantsTsPath)) {
+    await updateConstantsFileForClientOnly(constantsTsPath, true);
+  }
 
-    if (await fs.pathExists(demoJsxPath)) {
-      await updateDemoFile(demoJsxPath);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, demoJsxPath)}`,
-      //     ),
-      // );
-    }
-
-    if (await fs.pathExists(demoTsxPath)) {
-      await updateDemoFile(demoTsxPath);
-      // console.log(
-      //     chalk.gray(
-      //         `   ✓ Updated ${path.relative(projectPath, demoTsxPath)}`,
-      //     ),
-      // );
-    }
+  // Remove axios dependency from package.json
+  const packageJsonPath = path.join(projectPath, "package.json");
+  if (await fs.pathExists(packageJsonPath)) {
+    await removeAxiosFromPackageJson(packageJsonPath);
   }
 }
 
-async function updateIndexRoute(indexRoutePath) {
-  try {
-    const content = await fs.readFile(indexRoutePath, "utf8");
-
-    // Remove the users import line
-    let updatedContent = content.replace(
-      /import users from ["']\.\/users\.js["'];\s*\n?/g,
-      "",
-    );
-
-    // Remove the users route line
-    updatedContent = updatedContent.replace(
-      /router\.use\(["']\/users["'], users\);\s*\n?/g,
-      "",
-    );
-
-    // Clean up any extra empty lines
-    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
-
-    await fs.writeFile(indexRoutePath, updatedContent, "utf8");
-  } catch (error) {
-    console.log(
-      chalk.yellow(`⚠️  Could not update ${indexRoutePath}: ${error.message}`),
-    );
-  }
-}
-
-async function updateDemoFile(demoFilePath) {
+async function updateDemoFileForClientOnly(demoFilePath, isTypeScript) {
   try {
     const content = await fs.readFile(demoFilePath, "utf8");
-
-    // Define the items to remove (with flexible whitespace and line breaks)
-    const itemsToRemove = [
-      // Database Models item
-      /\{\s*title:\s*["']Database Models["'],\s*code:\s*["']server\/src\/models\/["'],\s*description:\s*["']Create or modify models for your data structure \(remove User model if not needed\)["'],?\s*\},?\s*/gs,
-      // Remove Demo Api Routes item
-      /\{\s*title:\s*["']Remove Demo Api Routes["'],\s*code:\s*["']server\/src\/routes\/users\.js["'],\s*description:\s*["']Delete or modify sample auth and user routes\. Create routes specific to your app["'],?\s*\},?\s*/gs,
-      // Update Route Index item
-      /\{\s*title:\s*["']Update Route Index["'],\s*code:\s*["']server\/src\/routes\/index\.js["'],\s*description:\s*["']Register your new routes and remove unused demo route imports["'],?\s*\},?\s*/gs,
-    ];
-
     let updatedContent = content;
 
-    // Remove each item
-    itemsToRemove.forEach((pattern) => {
-      updatedContent = updatedContent.replace(pattern, "");
-    });
+    // Remove server-related imports
+    updatedContent = updatedContent.replace(
+      /import\s+axios\s+from\s+["']axios["'];\s*\n?/g,
+      "",
+    );
+    updatedContent = updatedContent.replace(
+      /import\s+\{\s*API_ENDPOINTS\s*\}\s+from\s+["'][^"']*constants["'];\s*\n?/g,
+      "",
+    );
 
-    // Clean up any trailing commas and extra whitespace in the items array
-    updatedContent = updatedContent.replace(/,(\s*)\]/g, "$1]");
-    updatedContent = updatedContent.replace(/\[\s*,/g, "[");
+    // Remove unused React imports (useState, useEffect) since ApiMessage component is removed
+    updatedContent = updatedContent.replace(
+      /import\s+\{\s*useState,\s*useEffect\s*\}\s+from\s+["']react["'];\s*\n?/g,
+      "",
+    );
+
+    // Remove Server icon from imports
+    updatedContent = updatedContent.replace(/(\s+)Server,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/,(\s*)Server(\s*),/g, ",$1$2");
+    updatedContent = updatedContent.replace(/Server,(\s*)/g, "$1");
+
+    // Remove API-related icons from imports
+    updatedContent = updatedContent.replace(/(\s+)AlertCircle,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/(\s+)CheckCircle,(\s*)/g, "$1$2");
+    updatedContent = updatedContent.replace(/(\s+)Loader2,(\s*)/g, "$1$2");
+
+    // Clean up any trailing commas in imports
+    updatedContent = updatedContent.replace(
+      /,(\s*)\}\s+from\s+["']lucide-react["']/g,
+      '$1} from "lucide-react"',
+    );
+
+    // Remove the entire API Endpoint and Status section
+    const apiSectionRegex =
+      /\s*{\/\* API Endpoint and Status \*\/}[\s\S]*?<\/div>\s*<\/div>/;
+    updatedContent = updatedContent.replace(apiSectionRegex, "");
+
+    // Remove the Server Setup DocumentationCard
+    const serverCardRegex =
+      /\s*<DocumentationCard\s+icon=\{Server\}[\s\S]*?\/>\s*/;
+    updatedContent = updatedContent.replace(serverCardRegex, "");
+
+    // Update client setup items to remove server references
+    updatedContent = updatedContent.replace(
+      /client\/\.env\.example/g,
+      ".env.example",
+    );
+    updatedContent = updatedContent.replace(
+      /client\/src\/pages\/Demo\.jsx/g,
+      "src/pages/Demo.jsx",
+    );
+
+    // Remove the ApiMessage component definition
+    const apiMessageRegex = /function ApiMessage\(\)\s*\{[\s\S]*?\n\}/;
+    updatedContent = updatedContent.replace(apiMessageRegex, "");
+
+    // For TypeScript, also remove the ApiState interface
+    if (isTypeScript) {
+      const apiStateRegex = /interface ApiState\s*\{[\s\S]*?\n\}/;
+      updatedContent = updatedContent.replace(apiStateRegex, "");
+    }
 
     // Clean up any extra empty lines
     updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
 
     await fs.writeFile(demoFilePath, updatedContent, "utf8");
-  } catch (error) {
-    console.log(
-      chalk.yellow(`⚠️  Could not update ${demoFilePath}: ${error.message}`),
+  } catch (error) {}
+}
+
+async function updateConstantsFileForClientOnly(
+  constantsFilePath,
+  isTypeScript,
+) {
+  try {
+    const content = await fs.readFile(constantsFilePath, "utf8");
+    let updatedContent = content;
+
+    // Remove API_ENDPOINTS export
+    if (isTypeScript) {
+      updatedContent = updatedContent.replace(
+        /export const API_ENDPOINTS = \{[\s\S]*?\} as const;\s*\n?/g,
+        "",
+      );
+    } else {
+      updatedContent = updatedContent.replace(
+        /export const API_ENDPOINTS = \{[\s\S]*?\};\s*\n?/g,
+        "",
+      );
+    }
+
+    // Remove API_BASE_URL since it's only used for API_ENDPOINTS
+    updatedContent = updatedContent.replace(
+      /export const API_BASE_URL =[\s\S]*?;\s*\n?/g,
+      "",
     );
+
+    // Clean up any extra empty lines
+    updatedContent = updatedContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+
+    await fs.writeFile(constantsFilePath, updatedContent, "utf8");
+  } catch (error) {}
+}
+
+async function removeAxiosFromPackageJson(packageJsonPath) {
+  try {
+    const packageJson = await readPackageJson(packageJsonPath);
+
+    // Remove axios from dependencies
+    if (packageJson.dependencies && packageJson.dependencies.axios) {
+      delete packageJson.dependencies.axios;
+    }
+
+    await writePackageJson(packageJsonPath, packageJson);
+  } catch (error) {}
+}
+
+async function addBunTypesToPackageJson(packageJsonPath) {
+  try {
+    const packageJson = await readPackageJson(packageJsonPath);
+
+    // Initialize devDependencies if it doesn't exist
+    if (!packageJson.devDependencies) {
+      packageJson.devDependencies = {};
+    }
+
+    // Add @types/bun if not already present
+    if (!packageJson.devDependencies["@types/bun"]) {
+      packageJson.devDependencies["@types/bun"] = "latest";
+    }
+
+    await writePackageJson(packageJsonPath, packageJson);
+  } catch (error) {}
+}
+
+async function addBunTypesToProject(
+  projectPath,
+  packageManager,
+  concurrently,
+  initializeParts = INIT_PARTS.BOTH,
+) {
+  // Only add @types/bun if using bun as package manager
+  if (packageManager.name !== "bun") {
+    return;
+  }
+
+  const packageJsonPaths = [];
+
+  // Determine which package.json files to update
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    // For concurrent or both parts, update client and server package.json files
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.CLIENT
+    ) {
+      packageJsonPaths.push(path.join(projectPath, "client", "package.json"));
+    }
+
+    if (
+      concurrently ||
+      initializeParts === INIT_PARTS.BOTH ||
+      initializeParts === INIT_PARTS.SERVER
+    ) {
+      packageJsonPaths.push(path.join(projectPath, "server", "package.json"));
+    }
+  } else {
+    // For client-only or server-only, package.json is in project root
+    packageJsonPaths.push(path.join(projectPath, "package.json"));
+  }
+
+  // Add @types/bun to each package.json file
+  for (const packageJsonPath of packageJsonPaths) {
+    if (await fs.pathExists(packageJsonPath)) {
+      await addBunTypesToPackageJson(packageJsonPath);
+    }
+  }
+}
+
+async function renameTemplateTestFiles(projectPath, initializeParts) {
+  const testFileRenames = [
+    {
+      from: "server.template-test.js",
+      to: "server.test.js",
+    },
+    {
+      from: "server.template-test.ts",
+      to: "server.test.ts",
+    },
+  ];
+
+  const searchPaths = [];
+
+  if (initializeParts === INIT_PARTS.BOTH) {
+    searchPaths.push(
+      path.join(projectPath, "server", "src", "__tests__"),
+      path.join(projectPath, "client", "src", "__tests__"),
+    );
+  } else if (initializeParts === INIT_PARTS.SERVER) {
+    searchPaths.push(path.join(projectPath, "src", "__tests__"));
+  } else if (initializeParts === INIT_PARTS.CLIENT) {
+    searchPaths.push(path.join(projectPath, "src", "__tests__"));
+  }
+
+  for (const searchPath of searchPaths) {
+    if (await fs.pathExists(searchPath)) {
+      for (const rename of testFileRenames) {
+        const fromPath = path.join(searchPath, rename.from);
+        const toPath = path.join(searchPath, rename.to);
+
+        if (await fs.pathExists(fromPath)) {
+          await fs.move(fromPath, toPath);
+        }
+      }
+    }
   }
 }
 
@@ -238,45 +345,32 @@ async function processTemplateFiles(
   projectName,
   concurrently,
   initializeParts,
-  includeHelperRoutes = true,
 ) {
   console.log(chalk.blue("\n▸ Customizing template files..."));
   console.log(chalk.grey(`   Project: ${projectName}`));
   console.log(chalk.grey(`   Concurrent: ${concurrently}`));
   console.log(chalk.grey(`   InitializeParts: ${initializeParts}`));
 
+  // Rename template test files to proper test files
+  await renameTemplateTestFiles(projectPath, initializeParts);
+
   // Process files based on setup type
   if (concurrently) {
     // For concurrent setup, process both client and server from root
     await processClientFiles(projectPath, projectName, "client");
-    await processServerFiles(
-      projectPath,
-      projectName,
-      "server",
-      includeHelperRoutes,
-    );
+    await processServerFiles(projectPath, projectName, "server");
     await processRootFiles(projectPath, projectName);
   } else if (initializeParts === INIT_PARTS.BOTH) {
     // For both parts (non-concurrent), use traditional structure
     await processClientFiles(projectPath, projectName, "client");
-    await processServerFiles(
-      projectPath,
-      projectName,
-      "server",
-      includeHelperRoutes,
-    );
+    await processServerFiles(projectPath, projectName, "server");
     await processRootFiles(projectPath, projectName);
   } else {
     // For client-only or server-only, files are in project root
     if (initializeParts === INIT_PARTS.CLIENT) {
       await processClientFiles(projectPath, projectName, ".");
     } else if (initializeParts === INIT_PARTS.SERVER) {
-      await processServerFiles(
-        projectPath,
-        projectName,
-        ".",
-        includeHelperRoutes,
-      );
+      await processServerFiles(projectPath, projectName, ".");
     }
     // Process root files for single-part setups too
     await processRootFiles(projectPath, projectName);
@@ -357,12 +451,7 @@ async function processClientFiles(projectPath, projectName, clientDir) {
   // }
 }
 
-async function processServerFiles(
-  projectPath,
-  projectName,
-  serverDir,
-  includeHelperRoutes = true,
-) {
+async function processServerFiles(projectPath, projectName, serverDir) {
   const serverPath = path.join(projectPath, serverDir);
 
   // Rename gitignore to .gitignore
@@ -635,8 +724,11 @@ async function processPackageJson(
   }
 }
 
-async function createProjectFolder(projectPath) {
-  await fs.mkdir(projectPath);
+async function createProjectFolder(projectPath, isCurrentDirectory = false) {
+  if (!isCurrentDirectory) {
+    await fs.mkdir(projectPath);
+  }
+  // If using current directory, folder already exists - no need to create
 }
 
 async function copyTemplateFiles(
@@ -645,7 +737,6 @@ async function copyTemplateFiles(
   concurrently,
   initializeParts = INIT_PARTS.BOTH,
   projectName,
-  includeHelperRoutes = true,
 ) {
   if (concurrently || initializeParts === INIT_PARTS.BOTH) {
     await fs.copy(templateDir, projectPath);
@@ -672,9 +763,9 @@ async function copyTemplateFiles(
     }
   }
 
-  // Remove helper routes if not requested
-  if (!includeHelperRoutes) {
-    await removeHelperRoutes(projectPath, concurrently, initializeParts);
+  // Remove server-related content from Demo files for client-only projects
+  if (initializeParts === INIT_PARTS.CLIENT) {
+    await removeServerContentFromDemo(projectPath);
   }
 
   // Rename gitignore to .gitignore and update project name in files
@@ -683,7 +774,6 @@ async function copyTemplateFiles(
     projectName,
     concurrently,
     initializeParts,
-    includeHelperRoutes,
   );
 }
 
@@ -740,6 +830,35 @@ async function createClientPnpmWorkspaceFile(
   }
 }
 
+async function createServerPnpmWorkspaceFile(
+  projectPath,
+  concurrently,
+  initializeParts,
+) {
+  const serverPnpmWorkspaceContent = `ignoredBuiltDependencies:
+  - esbuild
+`;
+
+  let serverPath;
+
+  // Determine the server path based on setup type
+  if (concurrently || initializeParts === INIT_PARTS.BOTH) {
+    serverPath = path.join(projectPath, "server");
+  } else if (initializeParts === INIT_PARTS.SERVER) {
+    // For server-only setup, server files are in project root
+    serverPath = projectPath;
+  }
+
+  // Only create if we have a server path (server is being initialized)
+  if (serverPath && (await fs.pathExists(serverPath))) {
+    await fs.writeFile(
+      path.join(serverPath, "pnpm-workspace.yaml"),
+      serverPnpmWorkspaceContent,
+      "utf8",
+    );
+  }
+}
+
 export async function createProject(config) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -751,7 +870,14 @@ export async function createProject(config) {
 
   // Determine project path based on initialization parts
   let projectPath;
-  if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+
+  if (config.isCurrentDirectory) {
+    // Use current directory for all cases when projectName is "./"
+    projectPath = process.cwd();
+  } else if (
+    config.concurrently ||
+    config.initializeParts === INIT_PARTS.BOTH
+  ) {
     projectPath = path.resolve(process.cwd(), config.projectName);
   } else if (config.initializeParts === INIT_PARTS.CLIENT) {
     projectPath = path.resolve(process.cwd(), `${config.projectName}-client`);
@@ -826,35 +952,43 @@ export async function createProject(config) {
     }
 
     // console.log(createProgressMessage("Setting up project structure..."));
-    await createProjectFolder(projectPath);
+    await createProjectFolder(projectPath, config.isCurrentDirectory);
     await copyTemplateFiles(
       templateDir,
       projectPath,
       config.concurrently,
       config.initializeParts,
-      config.projectName,
-      config.includeHelperRoutes,
-      packageManager,
+      config.actualProjectName || config.projectName,
     );
     await processPackageJson(
       projectPath,
-      config.projectName,
+      config.actualProjectName || config.projectName,
       config.concurrently,
       config.initializeParts,
     );
 
-    if (config.concurrently) {
+    // Add @types/bun to devDependencies when using bun as package manager
+    await addBunTypesToProject(
+      projectPath,
+      packageManager,
+      config.concurrently,
+      config.initializeParts,
+    );
+
+    // Update workspace scripts for the chosen package manager when we have both client and server
+    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
       await updateConcurrentlyScripts(
         path.join(projectPath, "package.json"),
         packageManager,
+        config.concurrently,
       );
     }
 
     // Only create pnpm workspace file when using pnpm and concurrent setup
     if (config.concurrently && packageManager.name === "pnpm") {
-      console.log(
-        createProgressMessage("Creating pnpm workspace configuration..."),
-      );
+      // console.log(
+      //   createProgressMessage("Creating pnpm workspace configuration..."),
+      // );
       await createPnpmWorkspaceFile(projectPath, config.initializeParts);
     }
 
@@ -865,12 +999,21 @@ export async function createProject(config) {
         config.initializeParts === INIT_PARTS.CLIENT ||
         config.concurrently)
     ) {
-      console.log(
-        createProgressMessage(
-          "Creating client pnpm workspace configuration...",
-        ),
-      );
       await createClientPnpmWorkspaceFile(
+        projectPath,
+        config.concurrently,
+        config.initializeParts,
+      );
+    }
+
+    // Create server-specific pnpm-workspace.yaml when using pnpm (regardless of concurrent setup)
+    if (
+      packageManager.name === "pnpm" &&
+      (config.initializeParts === INIT_PARTS.BOTH ||
+        config.initializeParts === INIT_PARTS.SERVER ||
+        config.concurrently)
+    ) {
+      await createServerPnpmWorkspaceFile(
         projectPath,
         config.concurrently,
         config.initializeParts,
@@ -1015,7 +1158,12 @@ export async function createProject(config) {
 
     // Determine the actual project folder name that was created
     let actualProjectName;
-    if (config.concurrently || config.initializeParts === INIT_PARTS.BOTH) {
+    if (config.isCurrentDirectory) {
+      actualProjectName = config.actualProjectName;
+    } else if (
+      config.concurrently ||
+      config.initializeParts === INIT_PARTS.BOTH
+    ) {
       actualProjectName = config.projectName;
     } else if (config.initializeParts === INIT_PARTS.CLIENT) {
       actualProjectName = `${config.projectName}-client`;
@@ -1025,11 +1173,9 @@ export async function createProject(config) {
       actualProjectName = config.projectName;
     }
 
-    console.log(
-      chalk.green.bold(
-        `\n🎉 Project ${actualProjectName} created successfully!`,
-      ),
-    );
+    const successMessage = `\n🎉 Project ${actualProjectName} created successfully!`;
+
+    console.log(chalk.green.bold(successMessage));
 
     // Display fallback summary if any fallbacks were used
     displayFallbackSummary();

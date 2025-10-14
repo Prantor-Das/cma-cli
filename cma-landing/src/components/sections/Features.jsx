@@ -1,12 +1,19 @@
 "use client";
-import { Terminal, Code, Layers, Moon, ServerCog, Rocket } from "lucide-react";
+import {
+    Terminal,
+    Code,
+    Layers,
+    GitBranch,
+    Package,
+    ShieldCheck,
+} from "lucide-react";
 import { CONCURRENTLY_IMG, MERN_IMG } from "@/context/constants";
 
 const features = [
     {
-        title: "Interactive CLI",
+        title: "Smart Interactive CLI",
         description:
-            "Command-line interface for guided and customizable app scaffolding.",
+            "Intuitive and adaptive command-line interface guiding you through setup, tech choices, and project structure, all in one smooth flow.",
         icon: Terminal,
         gridClass: "span-col-2",
     },
@@ -34,24 +41,24 @@ const features = [
         image: CONCURRENTLY_IMG,
     },
     {
-        title: "Example API Endpoints",
+        title: "Flexible Project Setup",
         description:
-            "Ready-to-use API routes demonstrating best practices and integration.",
-        icon: ServerCog,
+            "Select between client-only, server-only, or full-stack setup with automatic Git initialization and environment scaffolding.",
+        icon: GitBranch,
         gridClass: "span-col-2",
     },
     {
-        title: "Pre-configured Dark Mode",
+        title: "Multi-Package Manager Support",
         description:
-            "Built-in dark theme support for improved usability and aesthetics.",
-        icon: Moon,
+            "Optimized installation with support for npm, pnpm, bun and yarn, choose your favorite and save time with faster dependency setup.",
+        icon: Package,
         gridClass: "span-col-1",
     },
     {
-        title: "Ready for Production",
+        title: "Enhanced Middleware & Security",
         description:
-            "Optimized and secure setup with deployment best practices included.",
-        icon: Rocket,
+            "Pre-configured with Helmet, CORS, rate limiting, and structured middleware setup for production-grade API security.",
+        icon: ShieldCheck,
         gridClass: "span-col-1",
     },
 ];
@@ -59,7 +66,7 @@ const features = [
 const Features = () => (
     <section className="py-20 max-w-6xl mx-auto" id="features">
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">
+            <h2 className="text-3xl md:text-4xl font-bold space-font">
                 Packed with Features
             </h2>
             <p className="text-zinc-500 dark:text-zinc-400 mt-2">
@@ -94,7 +101,7 @@ const Features = () => (
                         }
                     >
                         <Icon className="w-8 h-8 mb-3 text-green-600 dark:text-green-400 lg:mx-4 lg:mt-4" />
-                        <p className="text-lg font-semibold mb-2 lg:px-4">
+                        <p className="text-lg font-semibold mb-2 lg:px-4 ">
                             {title}
                         </p>
                         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 lg:px-4 lg:pb-4">

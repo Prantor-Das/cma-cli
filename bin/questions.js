@@ -31,7 +31,7 @@ export const questions = [
   {
     type: "input",
     name: "projectName",
-    message: "What is your project name?",
+    message: "What is your project name? (use './' for current directory)",
     default: "my-mern-app",
   },
   {
@@ -93,22 +93,7 @@ export const questions = [
     default: true,
     when: (answers) => answers.initializeParts === "both",
   },
-  {
-    type: "confirm",
-    name: "includeHelperRoutes",
-    message: "Include helper routes (user authentication, JWT middleware)?",
-    default: true,
-    when: (answers) => {
-      // Ask this question if:
-      // 1. Concurrently is true (includes both client and server)
-      // 2. OR initializeParts includes server (both or server only)
-      return (
-        answers.concurrently ||
-        answers.initializeParts === "both" ||
-        answers.initializeParts === "server"
-      );
-    },
-  },
+
   {
     type: "confirm",
     name: "installDependencies",

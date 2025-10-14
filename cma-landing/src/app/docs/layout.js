@@ -62,13 +62,7 @@ export default function DocsLayout({ children }) {
                     >
                         TypeScript
                     </Link>
-                    <Link
-                        href="/docs/authentication"
-                        className={linkClassName("/docs/authentication")}
-                        onClick={() => setIsOpen(false)}
-                    >
-                        Authentication
-                    </Link>
+
                     <Link
                         href="/docs/api-routes"
                         className={linkClassName("/docs/api-routes")}
