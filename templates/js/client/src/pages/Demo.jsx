@@ -144,7 +144,7 @@ export default function Demo() {
           </Link>
           &
           <Link
-            to="https://x.com/akashi_sde"
+            to="https://x.com/das_prantor"
             target="_blank"
             className="text-zinc-900 dark:text-zinc-100 hover:text-blue-500 hover:dark:text-blue-400 font-semibold text-lg"
           >
