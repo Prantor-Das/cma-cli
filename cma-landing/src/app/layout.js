@@ -80,7 +80,7 @@ export const metadata = {
     twitter: {
         card: "summary_large_image",
         creator: "@kenma_dev",
-        additionalCreators: ["@akashi_sde"],
+        additionalCreators: ["@das_prantor"],
         title: "cma-cli - Create MERN App",
         description:
             "A simple and powerful CLI tool to scaffold a modern MERN stack application with a single command.",

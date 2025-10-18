@@ -125,4 +125,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
     -   Twitter: [@kenma_dev](https://x.com/kenma_dev)
 -   **Prantor Das**
     -   GitHub: [@Prantor-Das](https://github.com/Prantor-Das)
-    -   Twitter: [@akashi_sde](https://x.com/akashi_sde)
+    -   Twitter: [@das_prantor](https://x.com/das_prantor)

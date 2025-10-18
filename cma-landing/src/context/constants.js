@@ -21,7 +21,7 @@ export const PRASOON_LINKS = {
 
 export const PRANTOR_LINKS = {
     github: "https://github.com/Prantor-Das",
-    twitter: "https://x.com/akashi_sde",
+    twitter: "https://x.com/das_prantor",
     linkedin: "https://www.linkedin.com/in/prantor-das",
     img: "https://ik.imagekit.io/kenma/cma-cli/akashipfp.jpg?updatedAt=1758917892027",
 };
